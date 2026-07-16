@@ -1,0 +1,98 @@
+## =========================
+## Visual Studio / .NET
+## =========================
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ll]og/
+[Ll]ogs/
+
+# ASP.NET Core specific
+backend/bin/
+backend/obj/
+backend/Properties/PublishProfiles/
+*.pubxml
+*.publishproj
+
+# NuGet
+*.nupkg
+**/packages/*
+!**/packages/build/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Local database / cache files created by VS / Rider tooling
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+slnx.sqlite
+ProjectSettings.json
+CodeChunks.db*
+SemanticSymbols.db*
+
+# User-specific secrets (never commit real connection strings/keys)
+appsettings.Development.json
+appsettings.*.local.json
+secrets.json
+*.pfx
+
+## =========================
+## Rider / JetBrains
+## =========================
+.idea/
+*.iml
+
+## =========================
+## Node / React / Vite (frontend)
+## =========================
+frontend/node_modules/
+node_modules/
+frontend/dist/
+dist/
+frontend/.vite/
+.vite/
+*.local
+
+# Env files (never commit real API keys/secrets)
+.env
+.env.local
+.env.*.local
+frontend/.env
+frontend/.env.local
+
+# npm/yarn logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+## =========================
+## Editor / OS files
+## =========================
+.vscode/
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+desktop.ini
+
+## =========================
+## Misc build artifacts
+## =========================
+*.cache
+*.tmp
+*.temp
+coverage/
