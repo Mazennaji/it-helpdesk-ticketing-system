@@ -58,7 +58,7 @@ export default function Register() {
     e.preventDefault();
     try {
       await register(form);
-      navigate("/");
+      navigate("/dashboard");
     } catch {
       gsap.fromTo(
         formRef.current,

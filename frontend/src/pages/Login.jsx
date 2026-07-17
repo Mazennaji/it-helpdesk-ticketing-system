@@ -54,7 +54,7 @@ export default function Login() {
     e.preventDefault();
     try {
       await login(form);
-      navigate("/");
+      navigate("/dashboard");
     } catch {
       gsap.fromTo(
         formRef.current,
