@@ -14,12 +14,14 @@ namespace Backend.Controllers
     public class TicketsController : ControllerBase
     {
         private readonly ApplicationDbContext _db;
+        private readonly IActivityLogService _activityLog;
 
         private static readonly string[] StaffRoles = { "Admin", "IT Support Agent", "Manager" };
 
-        public TicketsController(ApplicationDbContext db)
+        public TicketsController(ApplicationDbContext db, IActivityLogService activityLog)
         {
             _db = db;
+            _activityLog = activityLog;
         }
 
         [HttpPost]
@@ -55,6 +57,8 @@ namespace Backend.Controllers
             ticket.ReferenceNo = $"TCK-{1000 + ticket.TicketId}";
             await _db.SaveChangesAsync();
 
+            await _activityLog.LogAsync(userId.Value, ticket.TicketId, $"Created ticket {ticket.ReferenceNo}");
+
             var result = await GetDetailDto(ticket.TicketId);
             return CreatedAtAction(nameof(GetById), new { id = ticket.TicketId }, result);
         }
@@ -66,7 +70,8 @@ namespace Backend.Controllers
             [FromQuery] int? categoryId = null,
             [FromQuery] int? priorityId = null,
             [FromQuery] int? statusId = null,
-            [FromQuery] string? search = null)
+            [FromQuery] string? search = null,
+            [FromQuery] bool assignedToMe = false)
         {
             var userId = User.GetUserId();
             if (userId == null) return Unauthorized();
@@ -81,6 +86,9 @@ namespace Backend.Controllers
 
             if (!User.IsInAnyRole(StaffRoles))
                 query = query.Where(t => t.CreatedBy == userId.Value);
+
+            if (assignedToMe)
+                query = query.Where(t => t.AssignedTo == userId.Value);
 
             if (categoryId.HasValue) query = query.Where(t => t.CategoryId == categoryId.Value);
             if (priorityId.HasValue) query = query.Where(t => t.PriorityId == priorityId.Value);
@@ -139,7 +147,7 @@ namespace Backend.Controllers
             var userId = User.GetUserId();
             if (userId == null) return Unauthorized();
 
-            var ticket = await _db.Tickets.FindAsync(id);
+            var ticket = await _db.Tickets.Include(t => t.Status).FirstOrDefaultAsync(t => t.TicketId == id);
             if (ticket == null) return NotFound();
 
             var isStaff = User.IsInAnyRole(StaffRoles);
@@ -151,6 +159,36 @@ namespace Backend.Controllers
             if (!isStaff && dto.AssignedTo != ticket.AssignedTo)
                 return Forbid();
 
+            if (dto.StatusId != ticket.StatusId)
+            {
+                var currentStatus = ticket.Status!.Name;
+                var nextStatus = await _db.Statuses.FindAsync(dto.StatusId);
+                if (nextStatus == null) return BadRequest(new { message = "Invalid status." });
+
+                if (!TicketWorkflow.IsValidTransition(currentStatus, nextStatus.Name))
+                {
+                    return BadRequest(new
+                    {
+                        message = $"Cannot move a ticket from '{currentStatus}' directly to '{nextStatus.Name}'."
+                    });
+                }
+
+                await _activityLog.LogAsync(userId.Value, ticket.TicketId,
+                    $"Changed status from {currentStatus} to {nextStatus.Name}");
+
+                var resolvedStatus = await _db.Statuses.FirstOrDefaultAsync(s => s.Name == "Resolved");
+                if (resolvedStatus != null && dto.StatusId == resolvedStatus.StatusId && ticket.ResolvedAt == null)
+                    ticket.ResolvedAt = DateTime.UtcNow;
+            }
+
+            if (dto.AssignedTo != ticket.AssignedTo)
+            {
+                var agentName = dto.AssignedTo.HasValue
+                    ? (await _db.Users.FindAsync(dto.AssignedTo.Value))?.FullName ?? "Unknown"
+                    : "Unassigned";
+                await _activityLog.LogAsync(userId.Value, ticket.TicketId, $"Reassigned to {agentName}");
+            }
+
             ticket.Title = dto.Title;
             ticket.Description = dto.Description;
             ticket.CategoryId = dto.CategoryId;
@@ -159,11 +197,68 @@ namespace Backend.Controllers
             ticket.AssignedTo = dto.AssignedTo;
             ticket.UpdatedAt = DateTime.UtcNow;
 
-            var resolvedStatus = await _db.Statuses.FirstOrDefaultAsync(s => s.Name == "Resolved");
-            if (resolvedStatus != null && dto.StatusId == resolvedStatus.StatusId && ticket.ResolvedAt == null)
-                ticket.ResolvedAt = DateTime.UtcNow;
-
             await _db.SaveChangesAsync();
+
+            var result = await GetDetailDto(id);
+            return Ok(result);
+        }
+
+        [HttpPut("{id}/assign")]
+        [Authorize(Roles = "Admin,IT Support Agent,Manager")]
+        public async Task<ActionResult<TicketDetailDto>> Assign(int id, AssignTicketDto dto)
+        {
+            var userId = User.GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var ticket = await _db.Tickets.FindAsync(id);
+            if (ticket == null) return NotFound();
+
+            if (dto.AgentId.HasValue)
+            {
+                var agentExists = await _db.Users.AnyAsync(u => u.Id == dto.AgentId.Value);
+                if (!agentExists) return BadRequest(new { message = "Agent not found." });
+            }
+
+            var agentName = dto.AgentId.HasValue
+                ? (await _db.Users.FindAsync(dto.AgentId.Value))?.FullName ?? "Unknown"
+                : "Unassigned";
+
+            ticket.AssignedTo = dto.AgentId;
+            ticket.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            await _activityLog.LogAsync(userId.Value, ticket.TicketId, $"Assigned to {agentName}");
+
+            var result = await GetDetailDto(id);
+            return Ok(result);
+        }
+
+        [HttpPost("{id}/escalate")]
+        [Authorize(Roles = "Admin,IT Support Agent,Manager")]
+        public async Task<ActionResult<TicketDetailDto>> Escalate(int id, EscalateTicketDto dto)
+        {
+            var userId = User.GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var ticket = await _db.Tickets.Include(t => t.Priority).FirstOrDefaultAsync(t => t.TicketId == id);
+            if (ticket == null) return NotFound();
+
+            var nextPriority = await _db.Priorities
+                .Where(p => p.SortOrder > ticket.Priority!.SortOrder)
+                .OrderBy(p => p.SortOrder)
+                .FirstOrDefaultAsync();
+
+            if (nextPriority == null)
+                return BadRequest(new { message = "Ticket is already at the highest priority." });
+
+            var oldPriorityName = ticket.Priority!.Name;
+            ticket.PriorityId = nextPriority.PriorityId;
+            ticket.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            var reasonSuffix = string.IsNullOrWhiteSpace(dto.Reason) ? "" : $" ({dto.Reason})";
+            await _activityLog.LogAsync(userId.Value, ticket.TicketId,
+                $"Escalated priority from {oldPriorityName} to {nextPriority.Name}{reasonSuffix}");
 
             var result = await GetDetailDto(id);
             return Ok(result);
