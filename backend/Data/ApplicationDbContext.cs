@@ -16,6 +16,8 @@ namespace Backend.Data
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Priority> Priorities => Set<Priority>();
         public DbSet<Status> Statuses => Set<Status>();
+        public DbSet<TicketComment> TicketComments => Set<TicketComment>();
+        public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -49,6 +51,30 @@ namespace Backend.Data
                 .HasOne(t => t.Status)
                 .WithMany(s => s.Tickets)
                 .HasForeignKey(t => t.StatusId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<TicketComment>()
+                .HasOne(c => c.Ticket)
+                .WithMany()
+                .HasForeignKey(c => c.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<TicketComment>()
+                .HasOne(c => c.User)
+                .WithMany()
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<ActivityLog>()
+                .HasOne(a => a.Ticket)
+                .WithMany()
+                .HasForeignKey(a => a.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<ActivityLog>()
+                .HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Category>().HasData(
