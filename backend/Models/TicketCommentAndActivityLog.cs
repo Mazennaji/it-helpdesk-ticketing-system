@@ -5,6 +5,7 @@ namespace Backend.Models
 {
     public class TicketComment
     {
+        [Key]
         public int CommentId { get; set; }
 
         public int TicketId { get; set; }
@@ -25,6 +26,7 @@ namespace Backend.Models
 
     public class ActivityLog
     {
+        [Key]
         public int LogId { get; set; }
 
         public int UserId { get; set; }
