@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import gsap from "gsap";
 import AppLayout from "../components/AppLayout";
+import { useAuth } from "../context/AuthContext";
 import { fetchTickets, fetchCategories, fetchPriorities, fetchStatuses } from "../api/ticketService";
+
+const STAFF_ROLES = ["Admin", "IT Support Agent", "Manager"];
 
 const priorityColors = {
   Low: { bg: "#F1F5F9", text: "#475569", dot: "#94A3B8" },
@@ -27,11 +30,15 @@ const statCards = [
 ];
 
 export default function TicketList() {
+  const { user } = useAuth();
+  const isStaff = user?.roles?.some((r) => STAFF_ROLES.includes(r));
+
   const [tickets, setTickets] = useState([]);
   const [categories, setCategories] = useState([]);
   const [priorities, setPriorities] = useState([]);
   const [statuses, setStatuses] = useState([]);
   const [filters, setFilters] = useState({ search: "", categoryId: "", priorityId: "", statusId: "" });
+  const [assignedToMe, setAssignedToMe] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -60,6 +67,7 @@ export default function TicketList() {
     if (filters.categoryId) params.categoryId = filters.categoryId;
     if (filters.priorityId) params.priorityId = filters.priorityId;
     if (filters.statusId) params.statusId = filters.statusId;
+    if (assignedToMe) params.assignedToMe = true;
 
     const timeout = setTimeout(() => {
       fetchTickets(params)
@@ -69,7 +77,7 @@ export default function TicketList() {
     }, 250);
 
     return () => clearTimeout(timeout);
-  }, [filters]);
+  }, [filters, assignedToMe]);
 
   const counts = statCards.reduce((acc, s) => {
     acc[s.key] = s.byPriority
@@ -189,6 +197,16 @@ export default function TicketList() {
               <option key={st.id} value={st.id}>{st.name}</option>
             ))}
           </select>
+          {isStaff && (
+            <label className="flex items-center gap-2 text-sm text-slate-600 px-1">
+              <input
+                type="checkbox"
+                checked={assignedToMe}
+                onChange={(e) => setAssignedToMe(e.target.checked)}
+              />
+              Assigned to me
+            </label>
+          )}
           <Link
             ref={newBtnRef}
             to="/tickets/new"
