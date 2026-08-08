@@ -15,13 +15,18 @@ namespace Backend.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly IActivityLogService _activityLog;
+        private readonly INotificationService _notifications;
 
         private static readonly string[] StaffRoles = { "Admin", "IT Support Agent", "Manager" };
 
-        public TicketsController(ApplicationDbContext db, IActivityLogService activityLog)
+        public TicketsController(
+            ApplicationDbContext db,
+            IActivityLogService activityLog,
+            INotificationService notifications)
         {
             _db = db;
             _activityLog = activityLog;
+            _notifications = notifications;
         }
 
         [HttpPost]
@@ -176,6 +181,12 @@ namespace Backend.Controllers
                 await _activityLog.LogAsync(userId.Value, ticket.TicketId,
                     $"Changed status from {currentStatus} to {nextStatus.Name}");
 
+                if (ticket.CreatedBy != userId.Value)
+                {
+                    await _notifications.NotifyAsync(ticket.CreatedBy, ticket.TicketId,
+                        $"Ticket {ticket.ReferenceNo} status changed to {nextStatus.Name}");
+                }
+
                 var resolvedStatus = await _db.Statuses.FirstOrDefaultAsync(s => s.Name == "Resolved");
                 if (resolvedStatus != null && dto.StatusId == resolvedStatus.StatusId && ticket.ResolvedAt == null)
                     ticket.ResolvedAt = DateTime.UtcNow;
@@ -187,6 +198,12 @@ namespace Backend.Controllers
                     ? (await _db.Users.FindAsync(dto.AssignedTo.Value))?.FullName ?? "Unknown"
                     : "Unassigned";
                 await _activityLog.LogAsync(userId.Value, ticket.TicketId, $"Reassigned to {agentName}");
+
+                if (dto.AssignedTo.HasValue)
+                {
+                    await _notifications.NotifyAsync(dto.AssignedTo.Value, ticket.TicketId,
+                        $"You were assigned to ticket {ticket.ReferenceNo}");
+                }
             }
 
             ticket.Title = dto.Title;
@@ -229,6 +246,12 @@ namespace Backend.Controllers
 
             await _activityLog.LogAsync(userId.Value, ticket.TicketId, $"Assigned to {agentName}");
 
+            if (dto.AgentId.HasValue)
+            {
+                await _notifications.NotifyAsync(dto.AgentId.Value, ticket.TicketId,
+                    $"You were assigned to ticket {ticket.ReferenceNo}");
+            }
+
             var result = await GetDetailDto(id);
             return Ok(result);
         }
@@ -259,6 +282,12 @@ namespace Backend.Controllers
             var reasonSuffix = string.IsNullOrWhiteSpace(dto.Reason) ? "" : $" ({dto.Reason})";
             await _activityLog.LogAsync(userId.Value, ticket.TicketId,
                 $"Escalated priority from {oldPriorityName} to {nextPriority.Name}{reasonSuffix}");
+
+            if (ticket.AssignedTo.HasValue)
+            {
+                await _notifications.NotifyAsync(ticket.AssignedTo.Value, ticket.TicketId,
+                    $"Ticket {ticket.ReferenceNo} was escalated to {nextPriority.Name}");
+            }
 
             var result = await GetDetailDto(id);
             return Ok(result);
