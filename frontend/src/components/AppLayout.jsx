@@ -1,5 +1,6 @@
 import { useAuth } from "../context/AuthContext";
 import { Link, useLocation } from "react-router-dom";
+import NotificationBell from "./NotificationBell";
 
 const navItems = [
   { label: "Dashboard", path: "/dashboard" },
@@ -72,6 +73,7 @@ export default function AppLayout({ title, subtitle, children }) {
             )}
           </div>
           <div className="flex items-center gap-4">
+            <NotificationBell />
             <div className="text-right hidden sm:block">
               <p className="text-sm font-medium text-slate-800">{user?.fullName}</p>
               <p className="text-xs text-slate-500">{user?.roles?.join(", ")}</p>
