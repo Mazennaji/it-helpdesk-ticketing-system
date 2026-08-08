@@ -15,13 +15,18 @@ namespace Backend.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly IActivityLogService _activityLog;
+        private readonly INotificationService _notifications;
 
         private static readonly string[] StaffRoles = { "Admin", "IT Support Agent", "Manager" };
 
-        public TicketCommentsController(ApplicationDbContext db, IActivityLogService activityLog)
+        public TicketCommentsController(
+            ApplicationDbContext db,
+            IActivityLogService activityLog,
+            INotificationService notifications)
         {
             _db = db;
             _activityLog = activityLog;
+            _notifications = notifications;
         }
 
         [HttpGet]
@@ -91,6 +96,20 @@ namespace Backend.Controllers
 
             await _activityLog.LogAsync(userId.Value, ticketId,
                 comment.IsInternal ? "Added an internal note" : "Added a comment");
+
+            if (!comment.IsInternal)
+            {
+                if (isStaff && ticket.CreatedBy != userId.Value)
+                {
+                    await _notifications.NotifyAsync(ticket.CreatedBy, ticketId,
+                        $"New reply on ticket {ticket.ReferenceNo}");
+                }
+                else if (!isStaff && ticket.AssignedTo.HasValue && ticket.AssignedTo.Value != userId.Value)
+                {
+                    await _notifications.NotifyAsync(ticket.AssignedTo.Value, ticketId,
+                        $"New comment on ticket {ticket.ReferenceNo}");
+                }
+            }
 
             var user = await _db.Users.FindAsync(userId.Value);
             return Ok(new CommentResponseDto
