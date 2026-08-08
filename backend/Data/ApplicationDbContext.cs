@@ -18,6 +18,8 @@ namespace Backend.Data
         public DbSet<Status> Statuses => Set<Status>();
         public DbSet<TicketComment> TicketComments => Set<TicketComment>();
         public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
+        public DbSet<TicketAttachment> TicketAttachments => Set<TicketAttachment>();
+        public DbSet<Notification> Notifications => Set<Notification>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -76,6 +78,30 @@ namespace Backend.Data
                 .WithMany()
                 .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<TicketAttachment>()
+                .HasOne(a => a.Ticket)
+                .WithMany()
+                .HasForeignKey(a => a.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<TicketAttachment>()
+                .HasOne(a => a.Uploader)
+                .WithMany()
+                .HasForeignKey(a => a.UploadedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Notification>()
+                .HasOne(n => n.Ticket)
+                .WithMany()
+                .HasForeignKey(n => n.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Category>().HasData(
                 new Category { CategoryId = 1, Name = "Hardware" },
