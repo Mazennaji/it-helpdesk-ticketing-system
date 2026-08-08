@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import StatusTimeline from "../components/StatusTimeline";
@@ -17,8 +17,18 @@ import {
   fetchStatuses,
   fetchAgents,
 } from "../api/ticketService";
+import {
+  fetchAttachments,
+  uploadAttachment,
+  downloadAttachment,
+} from "../api/attachmentService";
 
 const STAFF_ROLES = ["Admin", "IT Support Agent", "Manager"];
+
+function formatFileSize(kb) {
+  if (kb < 1024) return `${kb} KB`;
+  return `${(kb / 1024).toFixed(1)} MB`;
+}
 
 export default function TicketDetail() {
   const { id } = useParams();
@@ -33,6 +43,7 @@ export default function TicketDetail() {
   const [agents, setAgents] = useState([]);
   const [comments, setComments] = useState([]);
   const [activity, setActivity] = useState([]);
+  const [attachments, setAttachments] = useState([]);
   const [form, setForm] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,6 +54,9 @@ export default function TicketDetail() {
   const [postingComment, setPostingComment] = useState(false);
   const [escalating, setEscalating] = useState(false);
   const [activeTab, setActiveTab] = useState("comments");
+  const [uploadProgress, setUploadProgress] = useState(null);
+  const [uploadError, setUploadError] = useState(null);
+  const fileInputRef = useRef(null);
 
   const loadAll = () => {
     const calls = [
@@ -52,17 +66,19 @@ export default function TicketDetail() {
       fetchStatuses(),
       fetchComments(id),
       fetchActivityLog(id),
+      fetchAttachments(id),
     ];
     if (isStaff) calls.push(fetchAgents());
 
     return Promise.all(calls).then((results) => {
-      const [t, c, p, s, cm, act, ag] = results;
+      const [t, c, p, s, cm, act, att, ag] = results;
       setTicket(t);
       setCategories(c);
       setPriorities(p);
       setStatuses(s);
       setComments(cm);
       setActivity(act);
+      setAttachments(att);
       if (ag) setAgents(ag);
       setForm({
         title: t.title,
@@ -159,6 +175,32 @@ export default function TicketDetail() {
       navigate("/tickets");
     } catch {
       setError("Unable to delete this ticket.");
+    }
+  };
+
+  const handleFileSelected = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadError(null);
+    setUploadProgress(0);
+    try {
+      const created = await uploadAttachment(id, file, setUploadProgress);
+      setAttachments((prev) => [created, ...prev]);
+      const act = await fetchActivityLog(id);
+      setActivity(act);
+    } catch (err) {
+      setUploadError(err.response?.data?.message || "Unable to upload this file.");
+    } finally {
+      setUploadProgress(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDownload = async (attachment) => {
+    try {
+      await downloadAttachment(id, attachment.attachmentId, attachment.fileName);
+    } catch {
+      setUploadError("Unable to download this file.");
     }
   };
 
@@ -298,6 +340,16 @@ export default function TicketDetail() {
                 Comments
               </button>
               <button
+                onClick={() => setActiveTab("attachments")}
+                className={`px-5 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                  activeTab === "attachments"
+                    ? "border-[#0B1F3A] text-[#0B1F3A]"
+                    : "border-transparent text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                Attachments{attachments.length > 0 ? ` (${attachments.length})` : ""}
+              </button>
+              <button
                 onClick={() => setActiveTab("activity")}
                 className={`px-5 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
                   activeTab === "activity"
@@ -366,6 +418,67 @@ export default function TicketDetail() {
                     </button>
                   </div>
                 </form>
+              </div>
+            )}
+
+            {activeTab === "attachments" && (
+              <div className="p-6">
+                {uploadError && (
+                  <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+                    {uploadError}
+                  </div>
+                )}
+
+                <div className="space-y-3 mb-5">
+                  {attachments.length === 0 && (
+                    <p className="text-sm text-slate-400">No attachments yet.</p>
+                  )}
+                  {attachments.map((a) => (
+                    <div
+                      key={a.attachmentId}
+                      className="flex items-center justify-between border border-slate-200 rounded-lg px-4 py-3"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" className="shrink-0">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <path d="M14 2v6h6" />
+                        </svg>
+                        <div className="min-w-0">
+                          <p className="text-sm text-slate-800 truncate">{a.fileName}</p>
+                          <p className="text-xs text-slate-400">
+                            {formatFileSize(a.fileSizeKb)} &middot; {a.uploadedByName} &middot;{" "}
+                            {new Date(a.uploadedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleDownload(a)}
+                        className="text-sm font-medium text-blue-600 hover:text-blue-700 shrink-0 ml-3"
+                      >
+                        Download
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="border-t border-slate-100 pt-4">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={handleFileSelected}
+                    className="hidden"
+                    id="attachment-upload"
+                  />
+                  <label
+                    htmlFor="attachment-upload"
+                    className="inline-block cursor-pointer bg-white border border-slate-300 text-slate-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors"
+                  >
+                    {uploadProgress !== null ? `Uploading... ${uploadProgress}%` : "Attach a file"}
+                  </label>
+                  <p className="text-xs text-slate-400 mt-2">
+                    Max 10MB. Images, PDFs, Office docs, text/log/CSV files only.
+                  </p>
+                </div>
               </div>
             )}
 
