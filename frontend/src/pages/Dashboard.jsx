@@ -1,53 +1,89 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 import AppLayout from "../components/AppLayout";
 import { useAuth } from "../context/AuthContext";
-import { fetchTickets } from "../api/ticketService";
+import {
+  fetchDashboardSummary,
+  fetchVolumeTrend,
+  fetchByCategory,
+  fetchByPriority,
+} from "../api/dashboardService";
 
 const statCards = [
-  { key: "Open", label: "Open", accent: "#3B82F6" },
-  { key: "In Progress", label: "In Progress", accent: "#F59E0B" },
-  { key: "Resolved", label: "Resolved", accent: "#10B981" },
-  { key: "Critical", label: "Critical", accent: "#EF4444", byPriority: true },
+  { key: "open", label: "Open", accent: "#3B82F6" },
+  { key: "inProgress", label: "In Progress", accent: "#F59E0B" },
+  { key: "resolved", label: "Resolved", accent: "#10B981" },
+  { key: "critical", label: "Critical", accent: "#EF4444" },
 ];
+
+const PRIORITY_COLORS = {
+  Low: "#94A3B8",
+  Medium: "#3B82F6",
+  High: "#F59E0B",
+  Critical: "#EF4444",
+};
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [tickets, setTickets] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [trend, setTrend] = useState([]);
+  const [byCategory, setByCategory] = useState([]);
+  const [byPriority, setByPriority] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const rootRef = useRef(null);
   const cardRefs = useRef([]);
   const chartRef = useRef(null);
+  const breakdownRef = useRef(null);
   const valueRefs = useRef([]);
 
   useEffect(() => {
-    fetchTickets({ pageSize: 200 })
-      .then((res) => setTickets(res.items))
-      .catch(() => setTickets([]))
+    Promise.all([
+      fetchDashboardSummary(),
+      fetchVolumeTrend(30),
+      fetchByCategory(),
+      fetchByPriority(),
+    ])
+      .then(([s, v, c, p]) => {
+        setSummary(s);
+        setTrend(v);
+        setByCategory(c);
+        setByPriority(p);
+      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  const counts = statCards.reduce((acc, s) => {
-    acc[s.key] = s.byPriority
-      ? tickets.filter((t) => t.priority === s.key).length
-      : tickets.filter((t) => t.status === s.key).length;
-    return acc;
-  }, {});
-
   useEffect(() => {
-    if (loading) return;
+    if (loading || !summary) return;
     const ctx = gsap.context(() => {
       gsap.set(cardRefs.current, { y: 24, opacity: 0 });
       gsap.set(chartRef.current, { y: 24, opacity: 0 });
+      gsap.set(breakdownRef.current, { y: 24, opacity: 0 });
 
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
       tl.to(cardRefs.current, { y: 0, opacity: 1, duration: 0.55, stagger: 0.1 })
-        .to(chartRef.current, { y: 0, opacity: 1, duration: 0.55 }, "-=0.25");
+        .to(chartRef.current, { y: 0, opacity: 1, duration: 0.55 }, "-=0.25")
+        .to(breakdownRef.current, { y: 0, opacity: 1, duration: 0.55 }, "-=0.3");
 
+      const values = { open: summary.open, inProgress: summary.inProgress, resolved: summary.resolved, critical: summary.critical };
       valueRefs.current.forEach((el, i) => {
         if (!el) return;
-        const target = counts[statCards[i].key] ?? 0;
+        const target = values[statCards[i].key] ?? 0;
         const counter = { val: 0 };
         gsap.to(counter, {
           val: target,
@@ -60,14 +96,10 @@ export default function Dashboard() {
     }, rootRef);
 
     return () => ctx.revert();
-  }, [loading, tickets]);
+  }, [loading, summary]);
 
-  const onCardEnter = (i) => {
-    gsap.to(cardRefs.current[i], { y: -4, duration: 0.25, ease: "power2.out" });
-  };
-  const onCardLeave = (i) => {
-    gsap.to(cardRefs.current[i], { y: 0, duration: 0.25, ease: "power2.out" });
-  };
+  const onCardEnter = (i) => gsap.to(cardRefs.current[i], { y: -4, duration: 0.25, ease: "power2.out" });
+  const onCardLeave = (i) => gsap.to(cardRefs.current[i], { y: 0, duration: 0.25, ease: "power2.out" });
 
   return (
     <AppLayout
@@ -88,10 +120,7 @@ export default function Dashboard() {
                 <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
                   {stat.label}
                 </span>
-                <span
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: stat.accent }}
-                />
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: stat.accent }} />
               </div>
               <p
                 ref={(el) => (valueRefs.current[i] = el)}
@@ -103,18 +132,72 @@ export default function Dashboard() {
           ))}
         </div>
 
-        <div
-          ref={chartRef}
-          className="bg-white rounded-xl border border-slate-200 p-8"
-        >
+        <div ref={chartRef} className="bg-white rounded-xl border border-slate-200 p-8 mb-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-sm font-semibold text-slate-800">
-              Ticket Volume Trend
-            </h2>
+            <h2 className="text-sm font-semibold text-slate-800">Ticket Volume Trend</h2>
             <span className="text-xs text-slate-400">Last 30 days</span>
           </div>
-          <div className="h-56 rounded-lg bg-slate-50 border border-dashed border-slate-200 flex items-center justify-center text-sm text-slate-400">
-            Chart integration coming in a later sprint
+          <div style={{ width: "100%", height: 260 }}>
+            <ResponsiveContainer>
+              <LineChart data={trend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#EEF2F6" />
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #E2E8F0" }} />
+                <Line type="monotone" dataKey="count" stroke="#3B82F6" strokeWidth={2.5} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div ref={breakdownRef} className="grid lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-xl border border-slate-200 p-8">
+            <h2 className="text-sm font-semibold text-slate-800 mb-6">Tickets by Category</h2>
+            <div style={{ width: "100%", height: 240 }}>
+              <ResponsiveContainer>
+                <BarChart data={byCategory} layout="vertical" margin={{ left: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#EEF2F6" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <YAxis type="category" dataKey="label" tick={{ fontSize: 11, fill: "#475569" }} axisLine={false} tickLine={false} width={90} />
+                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #E2E8F0" }} />
+                  <Bar dataKey="count" fill="#3B82F6" radius={[0, 4, 4, 0]} barSize={16} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200 p-8">
+            <h2 className="text-sm font-semibold text-slate-800 mb-6">Tickets by Priority</h2>
+            <div style={{ width: "100%", height: 240 }}>
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie
+                    data={byPriority}
+                    dataKey="count"
+                    nameKey="label"
+                    innerRadius={55}
+                    outerRadius={85}
+                    paddingAngle={2}
+                  >
+                    {byPriority.map((entry) => (
+                      <Cell key={entry.label} fill={PRIORITY_COLORS[entry.label] || "#94A3B8"} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #E2E8F0" }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex flex-wrap gap-3 justify-center mt-2">
+              {byPriority.map((entry) => (
+                <span key={entry.label} className="flex items-center gap-1.5 text-xs text-slate-600">
+                  <span
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: PRIORITY_COLORS[entry.label] || "#94A3B8" }}
+                  />
+                  {entry.label} ({entry.count})
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
