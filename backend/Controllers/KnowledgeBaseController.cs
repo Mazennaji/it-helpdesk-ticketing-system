@@ -112,7 +112,7 @@ namespace Backend.Controllers
                 Summary = dto.Summary,
                 Body = dto.Body,
                 IsPublished = dto.IsPublished,
-                AuthorId = User.GetUserId()?.ToString(),
+                AuthorId = User.GetUserId(),
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
             };
