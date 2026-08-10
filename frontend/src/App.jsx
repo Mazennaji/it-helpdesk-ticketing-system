@@ -6,6 +6,9 @@ import Dashboard from "./pages/Dashboard";
 import TicketList from "./pages/TicketList";
 import CreateTicket from "./pages/CreateTicket";
 import TicketDetail from "./pages/TicketDetail";
+import Reports from "./pages/Reports";
+import KnowledgeBase from "./pages/KnowledgeBase";
+import Settings from "./pages/Settings";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
@@ -43,6 +46,30 @@ export default function App() {
         element={
           <ProtectedRoute>
             <TicketDetail />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports"
+        element={
+          <ProtectedRoute>
+            <Reports />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/knowledge-base"
+        element={
+          <ProtectedRoute>
+            <KnowledgeBase />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Settings />
           </ProtectedRoute>
         }
       />
