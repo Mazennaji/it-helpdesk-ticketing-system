@@ -20,7 +20,7 @@ namespace Backend.Models
 
         public bool IsPublished { get; set; } = true;
 
-        public string? AuthorId { get; set; }
+        public int? AuthorId { get; set; }
         public ApplicationUser? Author { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
