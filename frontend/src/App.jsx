@@ -9,6 +9,7 @@ import TicketDetail from "./pages/TicketDetail";
 import Reports from "./pages/Reports";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import Settings from "./pages/Settings";
+import Assistant from "./pages/Assistant";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
@@ -70,6 +71,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/assistant"
+        element={
+          <ProtectedRoute>
+            <Assistant />
           </ProtectedRoute>
         }
       />
