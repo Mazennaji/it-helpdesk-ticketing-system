@@ -22,6 +22,7 @@ import {
   uploadAttachment,
   downloadAttachment,
 } from "../api/attachmentService";
+import { draftReply } from "../api/aiService";
 
 const STAFF_ROLES = ["Admin", "IT Support Agent", "Manager"];
 
@@ -56,6 +57,7 @@ export default function TicketDetail() {
   const [activeTab, setActiveTab] = useState("comments");
   const [uploadProgress, setUploadProgress] = useState(null);
   const [uploadError, setUploadError] = useState(null);
+  const [drafting, setDrafting] = useState(false);
   const fileInputRef = useRef(null);
 
   const loadAll = () => {
@@ -148,6 +150,19 @@ export default function TicketDetail() {
       setError(err.response?.data?.message || "Unable to escalate this ticket.");
     } finally {
       setEscalating(false);
+    }
+  };
+
+  const handleDraftReply = async () => {
+    if (drafting) return;
+    setDrafting(true);
+    try {
+      const { reply } = await draftReply({ ticketId: Number(id) });
+      setNewComment(reply);
+    } catch {
+      setError("Unable to draft a reply right now.");
+    } finally {
+      setDrafting(false);
     }
   };
 
@@ -391,6 +406,21 @@ export default function TicketDetail() {
                 </div>
 
                 <form onSubmit={handlePostComment} className="border-t border-slate-100 pt-4">
+                  {isStaff && (
+                    <div className="flex justify-end mb-2">
+                      <button
+                        type="button"
+                        onClick={handleDraftReply}
+                        disabled={drafting}
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 3l1.9 5.8L20 10l-5.1 3.7L16 20l-4-3.5L8 20l1.1-6.3L4 10l6.1-1.2z" />
+                        </svg>
+                        {drafting ? "Drafting..." : "Draft with AI"}
+                      </button>
+                    </div>
+                  )}
                   <textarea
                     rows={3}
                     value={newComment}
