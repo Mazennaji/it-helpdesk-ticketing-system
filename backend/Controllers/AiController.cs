@@ -44,7 +44,7 @@ namespace Backend.Controllers
         [Authorize(Roles = "Admin,IT Support Agent,Manager")]
         public async Task<ActionResult<DraftReplyResponseDto>> DraftReply(DraftReplyRequestDto request)
         {
-            var ticket = await _db.Tickets.FirstOrDefaultAsync(t => t.Id == request.TicketId);
+            var ticket = await _db.Tickets.FirstOrDefaultAsync(t => t.TicketId == request.TicketId);
             if (ticket == null) return NotFound(new { message = "Ticket not found." });
 
             try
