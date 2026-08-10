@@ -20,6 +20,7 @@ namespace Backend.Data
         public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
         public DbSet<TicketAttachment> TicketAttachments => Set<TicketAttachment>();
         public DbSet<Notification> Notifications => Set<Notification>();
+        public DbSet<KnowledgeArticle> KnowledgeArticles => Set<KnowledgeArticle>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -102,6 +103,12 @@ namespace Backend.Data
                 .WithMany()
                 .HasForeignKey(n => n.TicketId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<KnowledgeArticle>()
+                .HasOne(a => a.Author)
+                .WithMany()
+                .HasForeignKey(a => a.AuthorId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             builder.Entity<Category>().HasData(
                 new Category { CategoryId = 1, Name = "Hardware" },
