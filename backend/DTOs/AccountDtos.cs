@@ -4,7 +4,7 @@ namespace Backend.DTOs
 {
     public class MyProfileDto
     {
-        public string Id { get; set; } = string.Empty;
+        public int Id { get; set; }
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string? Department { get; set; }
