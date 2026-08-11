@@ -77,12 +77,97 @@ function initialsOf(name) {
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
+function SidebarContent({ user, location, onNavigate }) {
+  return (
+    <>
+      <div className="flex items-center gap-2.5 px-3 mb-9">
+        <span className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+          <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
+            <path
+              d="M6 10a6 6 0 0 1 6-6h24a6 6 0 0 1 6 6v18a6 6 0 0 1-6 6H18l-9 8v-8H6V10Z"
+              fill="#13294B"
+            />
+            <path
+              d="M14 21l6 6 12-13"
+              stroke="#3B82F6"
+              strokeWidth="3.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+        <span className="text-white font-semibold tracking-tight text-base">
+          HelpDesk <span className="text-blue-400">Pro</span>
+        </span>
+      </div>
+
+      <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        Menu
+      </p>
+      <nav className="flex flex-col gap-1">
+        {navItems.map((item) => {
+          const active =
+            item.path === "/dashboard"
+              ? location.pathname === "/dashboard"
+              : location.pathname.startsWith(item.path);
+          return (
+            <Link
+              key={item.label}
+              to={item.path}
+              onClick={onNavigate}
+              className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                active
+                  ? "bg-white/10 text-white shadow-sm"
+                  : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
+              }`}
+            >
+              <span
+                className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 rounded-r-full bg-blue-400 transition-all ${
+                  active ? "h-6 opacity-100" : "h-0 opacity-0"
+                }`}
+              />
+              <span
+                className={`transition-colors ${
+                  active ? "text-blue-400" : "text-slate-500 group-hover:text-slate-300"
+                }`}
+              >
+                {item.icon}
+              </span>
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="mt-auto pt-6">
+        <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-white/5 border border-white/10">
+          <span className="w-9 h-9 shrink-0 rounded-full bg-blue-500/20 text-blue-300 flex items-center justify-center text-xs font-semibold leading-none select-none">
+            {initialsOf(user?.fullName)}
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-white truncate leading-tight">
+              {user?.fullName}
+            </p>
+            <p className="text-[11px] text-slate-400 truncate leading-tight">
+              {user?.roles?.join(", ")}
+            </p>
+          </div>
+        </div>
+        <p className="px-3 mt-4 text-[11px] text-slate-600">
+          &copy; {new Date().getFullYear()} HelpDesk Pro
+        </p>
+      </div>
+    </>
+  );
+}
+
 export default function AppLayout({ title, subtitle, children }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [query, setQuery] = useState("");
   const menuRef = useRef(null);
 
@@ -90,7 +175,12 @@ export default function AppLayout({ title, subtitle, children }) {
     const onClick = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
     };
-    const onEsc = (e) => e.key === "Escape" && setMenuOpen(false);
+    const onEsc = (e) => {
+      if (e.key === "Escape") {
+        setMenuOpen(false);
+        setDrawerOpen(false);
+      }
+    };
     document.addEventListener("mousedown", onClick);
     document.addEventListener("keydown", onEsc);
     return () => {
@@ -98,6 +188,10 @@ export default function AppLayout({ title, subtitle, children }) {
       document.removeEventListener("keydown", onEsc);
     };
   }, []);
+
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [location.pathname]);
 
   const submitSearch = (e) => {
     e.preventDefault();
@@ -108,87 +202,47 @@ export default function AppLayout({ title, subtitle, children }) {
   return (
     <div className="min-h-screen flex bg-[#F7F8FA]">
       <aside className="hidden md:flex md:w-64 flex-col bg-gradient-to-b from-[#0B1F3A] to-[#0A1B33] text-slate-300 px-4 py-6">
-        <div className="flex items-center gap-2.5 px-3 mb-9">
-          <span className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-            <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
-              <path
-                d="M6 10a6 6 0 0 1 6-6h24a6 6 0 0 1 6 6v18a6 6 0 0 1-6 6H18l-9 8v-8H6V10Z"
-                fill="#13294B"
-              />
-              <path
-                d="M14 21l6 6 12-13"
-                stroke="#3B82F6"
-                strokeWidth="3.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
-          <span className="text-white font-semibold tracking-tight text-base">
-            HelpDesk <span className="text-blue-400">Pro</span>
-          </span>
-        </div>
-
-        <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-          Menu
-        </p>
-        <nav className="flex flex-col gap-1">
-          {navItems.map((item) => {
-            const active =
-              item.path === "/dashboard"
-                ? location.pathname === "/dashboard"
-                : location.pathname.startsWith(item.path);
-            return (
-              <Link
-                key={item.label}
-                to={item.path}
-                className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  active
-                    ? "bg-white/10 text-white shadow-sm"
-                    : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
-                }`}
-              >
-                <span
-                  className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 rounded-r-full bg-blue-400 transition-all ${
-                    active ? "h-6 opacity-100" : "h-0 opacity-0"
-                  }`}
-                />
-                <span
-                  className={`transition-colors ${
-                    active ? "text-blue-400" : "text-slate-500 group-hover:text-slate-300"
-                  }`}
-                >
-                  {item.icon}
-                </span>
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="mt-auto pt-6">
-          <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-white/5 border border-white/10">
-            <span className="w-9 h-9 shrink-0 rounded-full bg-blue-500/20 text-blue-300 flex items-center justify-center text-xs font-semibold leading-none select-none">
-              {initialsOf(user?.fullName)}
-            </span>
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-white truncate leading-tight">
-                {user?.fullName}
-              </p>
-              <p className="text-[11px] text-slate-400 truncate leading-tight">
-                {user?.roles?.join(", ")}
-              </p>
-            </div>
-          </div>
-          <p className="px-3 mt-4 text-[11px] text-slate-600">
-            &copy; {new Date().getFullYear()} HelpDesk Pro
-          </p>
-        </div>
+        <SidebarContent user={user} location={location} />
       </aside>
+
+      {drawerOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm animate-[fadeIn_0.15s_ease-out]"
+            onClick={() => setDrawerOpen(false)}
+          />
+          <aside className="absolute left-0 top-0 h-full w-64 flex flex-col bg-gradient-to-b from-[#0B1F3A] to-[#0A1B33] text-slate-300 px-4 py-6 shadow-2xl animate-[slideInLeft_0.2s_ease-out]">
+            <button
+              onClick={() => setDrawerOpen(false)}
+              className="absolute top-5 right-4 w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              aria-label="Close menu"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
+            </button>
+            <SidebarContent
+              user={user}
+              location={location}
+              onNavigate={() => setDrawerOpen(false)}
+            />
+          </aside>
+        </div>
+      )}
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200/80">
-          <div className="px-6 md:px-8 h-16 flex items-center gap-4">
+          <div className="px-4 md:px-8 h-16 flex items-center gap-3 md:gap-4">
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className="md:hidden w-10 h-10 shrink-0 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors text-slate-600"
+              aria-label="Open menu"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12h18M3 6h18M3 18h18" />
+              </svg>
+            </button>
+
             <div className="min-w-0">
               <h1 className="text-base font-semibold text-slate-900 tracking-tight truncate">
                 {title}
@@ -229,7 +283,7 @@ export default function AppLayout({ title, subtitle, children }) {
                 <NotificationBell />
               </div>
 
-              <div className="w-px h-6 bg-slate-200 mx-1.5" />
+              <div className="w-px h-6 bg-slate-200 mx-1.5 hidden sm:block" />
 
               <div className="relative" ref={menuRef}>
                 <button
@@ -308,7 +362,7 @@ export default function AppLayout({ title, subtitle, children }) {
           </div>
         </header>
 
-        <main className="flex-1 p-6 md:p-8">{children}</main>
+        <main className="flex-1 p-4 sm:p-6 md:p-8">{children}</main>
       </div>
 
       <AssistantWidget />
