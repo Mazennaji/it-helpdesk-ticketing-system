@@ -42,16 +42,23 @@ const stats = [
 
 export default function LandingPage() {
   const heroRef = useRef(null);
+  const spotlightRef = useRef(null);
+  const cardWrapRef = useRef(null);
   const statusLabelRef = useRef(null);
   const statusDotRef = useRef(null);
   const barRef = useRef(null);
+  const orb1Ref = useRef(null);
+  const orb2Ref = useRef(null);
   const sectionRefs = useRef([]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.set(".hero-in", { opacity: 0, y: 22 });
+      gsap.set(".hero-in", { opacity: 0, y: 24 });
       gsap.timeline({ defaults: { ease: "power3.out" } })
-        .to(".hero-in", { opacity: 1, y: 0, duration: 0.7, stagger: 0.12, delay: 0.1 });
+        .to(".hero-in", { opacity: 1, y: 0, duration: 0.8, stagger: 0.12, delay: 0.15 });
+
+      gsap.to(orb1Ref.current, { x: 40, y: 30, duration: 12, repeat: -1, yoyo: true, ease: "sine.inOut" });
+      gsap.to(orb2Ref.current, { x: -34, y: -26, duration: 15, repeat: -1, yoyo: true, ease: "sine.inOut" });
 
       const cycle = gsap.timeline({ repeat: -1, defaults: { ease: "power2.inOut" } });
       statuses.forEach((s) => {
@@ -61,6 +68,7 @@ export default function LandingPage() {
           statusLabelRef.current.textContent = s.label;
           statusDotRef.current.style.backgroundColor = s.color;
           statusLabelRef.current.style.color = s.color;
+          statusDotRef.current.style.boxShadow = `0 0 12px ${s.color}`;
         }, null, "<");
       });
 
@@ -68,10 +76,10 @@ export default function LandingPage() {
         if (!el) return;
         gsap.fromTo(
           el.querySelectorAll(".reveal"),
-          { opacity: 0, y: 26 },
+          { opacity: 0, y: 30 },
           {
-            opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: "power3.out",
-            scrollTrigger: { trigger: el, start: "top 78%", toggleActions: "play none none none" },
+            opacity: 1, y: 0, duration: 0.7, stagger: 0.1, ease: "power3.out",
+            scrollTrigger: { trigger: el, start: "top 80%", toggleActions: "play none none none" },
           }
         );
       });
@@ -80,47 +88,68 @@ export default function LandingPage() {
     return () => ctx.revert();
   }, []);
 
+  const onHeroMove = (e) => {
+    const rect = heroRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    if (spotlightRef.current) {
+      gsap.to(spotlightRef.current, { x: x - 300, y: y - 300, duration: 0.6, ease: "power2.out" });
+    }
+    if (cardWrapRef.current) {
+      const cx = (e.clientX / window.innerWidth - 0.5) * 14;
+      const cy = (e.clientY / window.innerHeight - 0.5) * 14;
+      gsap.to(cardWrapRef.current, { rotateY: cx, rotateX: -cy, duration: 0.6, ease: "power2.out" });
+    }
+  };
+
   const addSectionRef = (el) => {
     if (el && !sectionRefs.current.includes(el)) sectionRefs.current.push(el);
   };
 
   return (
-    <div ref={heroRef} className="bg-[#F7F8FA] text-slate-900 font-['Instrument_Sans',sans-serif] antialiased">
-      <header className="max-w-6xl mx-auto flex items-center justify-between px-6 py-6">
+    <div className="bg-[#060A14] text-slate-100 font-['Instrument_Sans',sans-serif] antialiased overflow-hidden">
+      <header className="relative z-20 max-w-6xl mx-auto flex items-center justify-between px-6 py-6">
         <div className="flex items-center gap-2.5">
           <svg width="30" height="30" viewBox="0 0 48 48" fill="none">
-            <path d="M6 10a6 6 0 0 1 6-6h24a6 6 0 0 1 6 6v18a6 6 0 0 1-6 6H18l-9 8v-8H6V10Z" fill="#0B1F3A" />
+            <path d="M6 10a6 6 0 0 1 6-6h24a6 6 0 0 1 6 6v18a6 6 0 0 1-6 6H18l-9 8v-8H6V10Z" fill="#13294B" />
             <path d="M14 21l6 6 12-13" stroke="#3B82F6" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span className="font-semibold tracking-tight text-lg font-['Space_Grotesk',sans-serif]">
-            HelpDesk <span className="text-blue-600">Pro</span>
+          <span className="font-semibold tracking-tight text-lg font-['Space_Grotesk',sans-serif] text-white">
+            HelpDesk <span className="text-blue-400">Pro</span>
           </span>
         </div>
         <div className="flex items-center gap-6">
-          <a href="#how-it-works" className="text-sm text-slate-600 hover:text-slate-900 hidden sm:inline transition-colors">How it works</a>
-          <a href="#modules" className="text-sm text-slate-600 hover:text-slate-900 hidden sm:inline transition-colors">Modules</a>
-          <Link to="/login" className="text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors">Log in</Link>
-          <Link to="/register" className="text-sm font-medium bg-[#0B1F3A] text-white px-4 py-2 rounded-lg hover:bg-[#132a4d] transition-colors">
+          <a href="#how-it-works" className="text-sm text-slate-400 hover:text-white hidden sm:inline transition-colors">How it works</a>
+          <a href="#modules" className="text-sm text-slate-400 hover:text-white hidden sm:inline transition-colors">Modules</a>
+          <Link to="/login" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Log in</Link>
+          <Link to="/register" className="text-sm font-medium bg-white/10 border border-white/15 backdrop-blur text-white px-4 py-2 rounded-lg hover:bg-white/15 transition-colors">
             Start a pilot
           </Link>
         </div>
       </header>
 
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#0B1220] via-[#0B1F3A] to-[#0E274A]">
-        <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:44px_44px]" />
-        <div className="absolute -top-40 left-1/4 w-[36rem] h-[36rem] rounded-full bg-blue-500/20 blur-[120px] pointer-events-none" />
-        <div className="absolute -bottom-52 right-0 w-[32rem] h-[32rem] rounded-full bg-emerald-400/10 blur-[120px] pointer-events-none" />
+      <section
+        ref={heroRef}
+        onMouseMove={onHeroMove}
+        className="relative min-h-[88vh] flex items-center"
+        style={{ perspective: "1200px" }}
+      >
+        <div className="absolute inset-0 [background-image:radial-gradient(circle_at_center,rgba(59,130,246,0.08),transparent_60%)]" />
+        <div className="absolute inset-0 opacity-[0.07] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(ellipse_at_center,#000_40%,transparent_75%)]" />
+        <div ref={orb1Ref} className="absolute top-10 left-1/4 w-[34rem] h-[34rem] rounded-full bg-blue-600/20 blur-[130px] pointer-events-none" />
+        <div ref={orb2Ref} className="absolute bottom-0 right-10 w-[30rem] h-[30rem] rounded-full bg-emerald-500/12 blur-[130px] pointer-events-none" />
+        <div ref={spotlightRef} className="absolute w-[600px] h-[600px] rounded-full bg-blue-400/10 blur-[100px] pointer-events-none hidden lg:block" />
 
-        <div className="relative max-w-6xl mx-auto px-6 pt-16 pb-24 grid lg:grid-cols-2 gap-16 items-center">
+        <div className="relative z-10 max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center w-full py-16">
           <div>
-            <p className="hero-in inline-flex items-center gap-2 text-xs font-semibold tracking-[0.2em] text-blue-300 uppercase mb-5 font-['IBM_Plex_Mono',monospace]">
+            <p className="hero-in inline-flex items-center gap-2 text-xs font-semibold tracking-[0.2em] text-blue-300 uppercase mb-6 font-['IBM_Plex_Mono',monospace]">
               <span className="w-6 h-px bg-blue-400/60" />
               IT Service Desk
             </p>
-            <h1 className="hero-in text-4xl sm:text-5xl xl:text-6xl font-semibold text-white leading-[1.05] tracking-tight font-['Space_Grotesk',sans-serif]">
-              Every ticket.
+            <h1 className="hero-in text-4xl sm:text-5xl xl:text-6xl font-semibold leading-[1.05] tracking-tight font-['Space_Grotesk',sans-serif]">
+              <span className="text-white">Every ticket.</span>
               <br />
-              <span className="bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-200 via-white to-blue-300 bg-clip-text text-transparent">
                 Tracked, assigned, resolved.
               </span>
             </h1>
@@ -128,7 +157,7 @@ export default function LandingPage() {
               HelpDesk Pro gives IT teams one queue for every request — automatically categorized, prioritized, and routed to the right agent.
             </p>
             <div className="hero-in mt-9 flex items-center gap-4">
-              <Link to="/register" className="group bg-white text-[#0B1F3A] font-medium text-sm px-5 py-3 rounded-lg hover:bg-slate-100 transition-all hover:shadow-lg hover:shadow-blue-500/10">
+              <Link to="/register" className="relative bg-white text-[#0B1F3A] font-medium text-sm px-5 py-3 rounded-lg hover:shadow-[0_0_30px_rgba(59,130,246,0.4)] transition-all">
                 Start a pilot
               </Link>
               <a href="#how-it-works" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
@@ -146,25 +175,24 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="hero-in">
-            <div className="relative bg-white/[0.04] border border-white/10 rounded-2xl p-6 backdrop-blur-sm max-w-sm ml-auto shadow-2xl shadow-blue-950/40">
-              <div className="absolute -inset-px rounded-2xl bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
-              <div className="relative">
+          <div ref={cardWrapRef} className="hero-in" style={{ transformStyle: "preserve-3d" }}>
+            <div className="relative rounded-2xl p-[1px] bg-gradient-to-b from-white/20 via-white/5 to-transparent max-w-sm ml-auto shadow-[0_20px_70px_-20px_rgba(59,130,246,0.5)]">
+              <div className="rounded-2xl bg-[#0B152A]/80 backdrop-blur-xl p-6">
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-xs font-['IBM_Plex_Mono',monospace] text-slate-400">TCK-1042</span>
                   <span className="flex items-center gap-1.5 text-xs font-medium">
-                    <span ref={statusDotRef} className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                    <span ref={statusDotRef} className="w-1.5 h-1.5 rounded-full bg-blue-500" style={{ boxShadow: "0 0 12px #3B82F6" }} />
                     <span ref={statusLabelRef} className="text-blue-400">Open</span>
                   </span>
                 </div>
                 <p className="text-white text-sm font-medium leading-snug mb-1">VPN connection dropping intermittently</p>
                 <p className="text-slate-500 text-xs mb-5 font-['IBM_Plex_Mono',monospace]">Reported by J. Alvarez &middot; Network</p>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-red-500/15 text-red-400">High priority</span>
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/10 text-slate-300">Assigned: S. Cho</span>
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/20">High priority</span>
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/5 text-slate-300 border border-white/10">Assigned: S. Cho</span>
                 </div>
                 <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mt-4">
-                  <div ref={barRef} className="h-full rounded-full bg-blue-500" style={{ width: "8%" }} />
+                  <div ref={barRef} className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-400" style={{ width: "8%" }} />
                 </div>
               </div>
             </div>
@@ -172,28 +200,29 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section ref={addSectionRef} className="max-w-6xl mx-auto px-6 py-20">
+      <section ref={addSectionRef} className="relative max-w-6xl mx-auto px-6 py-20">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
           {roles.map((role) => (
-            <div key={role.name} className="reveal">
-              <p className="font-semibold text-sm mb-1.5 font-['Space_Grotesk',sans-serif]">{role.name}</p>
+            <div key={role.name} className="reveal rounded-2xl border border-white/5 bg-white/[0.02] p-5 hover:border-white/10 hover:bg-white/[0.04] transition-all">
+              <p className="font-semibold text-sm mb-1.5 font-['Space_Grotesk',sans-serif] text-white">{role.name}</p>
               <p className="text-sm text-slate-500 leading-relaxed">{role.body}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <section id="how-it-works" ref={addSectionRef} className="bg-white border-y border-slate-200 py-24">
-        <div className="max-w-6xl mx-auto px-6">
-          <p className="reveal text-xs font-semibold tracking-[0.2em] text-blue-600 uppercase mb-3 font-['IBM_Plex_Mono',monospace]">How it works</p>
-          <h2 className="reveal text-3xl sm:text-4xl font-semibold tracking-tight mb-14 font-['Space_Grotesk',sans-serif] max-w-lg">
+      <section id="how-it-works" ref={addSectionRef} className="relative border-y border-white/5 py-24 bg-white/[0.015]">
+        <div className="absolute top-0 left-1/4 w-[30rem] h-[16rem] rounded-full bg-blue-600/10 blur-[110px] pointer-events-none" />
+        <div className="relative max-w-6xl mx-auto px-6">
+          <p className="reveal text-xs font-semibold tracking-[0.2em] text-blue-400 uppercase mb-3 font-['IBM_Plex_Mono',monospace]">How it works</p>
+          <h2 className="reveal text-3xl sm:text-4xl font-semibold tracking-tight mb-14 font-['Space_Grotesk',sans-serif] max-w-lg text-white">
             From submitted to resolved, in four steps.
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {steps.map((step) => (
-              <div key={step.n} className="reveal relative">
-                <span className="block text-5xl font-semibold text-slate-100 font-['Space_Grotesk',sans-serif] mb-3 tracking-tight">{step.n}</span>
-                <p className="font-semibold text-sm mb-1.5">{step.title}</p>
+              <div key={step.n} className="reveal">
+                <span className="block text-5xl font-semibold text-white/10 font-['Space_Grotesk',sans-serif] mb-3 tracking-tight">{step.n}</span>
+                <p className="font-semibold text-sm mb-1.5 text-white">{step.title}</p>
                 <p className="text-sm text-slate-500 leading-relaxed">{step.body}</p>
               </div>
             ))}
@@ -201,25 +230,27 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="modules" ref={addSectionRef} className="max-w-6xl mx-auto px-6 py-24">
-        <p className="reveal text-xs font-semibold tracking-[0.2em] text-blue-600 uppercase mb-3 font-['IBM_Plex_Mono',monospace]">System modules</p>
-        <h2 className="reveal text-3xl sm:text-4xl font-semibold tracking-tight mb-14 font-['Space_Grotesk',sans-serif] max-w-lg">
+      <section id="modules" ref={addSectionRef} className="relative max-w-6xl mx-auto px-6 py-24">
+        <p className="reveal text-xs font-semibold tracking-[0.2em] text-blue-400 uppercase mb-3 font-['IBM_Plex_Mono',monospace]">System modules</p>
+        <h2 className="reveal text-3xl sm:text-4xl font-semibold tracking-tight mb-14 font-['Space_Grotesk',sans-serif] max-w-lg text-white">
           Everything a support queue actually needs.
         </h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {modules.map((mod) => (
-            <div key={mod.id} className="reveal group border border-slate-200 rounded-xl p-6 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5 hover:-translate-y-0.5 transition-all bg-white">
-              <span className="text-xs font-['IBM_Plex_Mono',monospace] text-blue-600">{mod.id}</span>
-              <p className="font-semibold text-sm mt-2 mb-1.5 group-hover:text-blue-700 transition-colors">{mod.title}</p>
-              <p className="text-sm text-slate-500 leading-relaxed">{mod.body}</p>
+            <div key={mod.id} className="reveal group relative rounded-xl p-[1px] bg-gradient-to-b from-white/10 to-transparent hover:from-blue-400/40 transition-all">
+              <div className="rounded-xl bg-[#0A1220] p-6 h-full group-hover:bg-[#0C1526] transition-colors">
+                <span className="text-xs font-['IBM_Plex_Mono',monospace] text-blue-400">{mod.id}</span>
+                <p className="font-semibold text-sm mt-2 mb-1.5 text-white group-hover:text-blue-300 transition-colors">{mod.title}</p>
+                <p className="text-sm text-slate-500 leading-relaxed">{mod.body}</p>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
-      <section ref={addSectionRef} className="relative overflow-hidden bg-[#0B1F3A] py-20">
-        <div className="absolute inset-0 opacity-[0.05] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:44px_44px]" />
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[40rem] h-[20rem] rounded-full bg-blue-500/15 blur-[100px] pointer-events-none" />
+      <section ref={addSectionRef} className="relative overflow-hidden py-24 border-t border-white/5">
+        <div className="absolute inset-0 opacity-[0.05] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(ellipse_at_center,#000_30%,transparent_70%)]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[40rem] h-[22rem] rounded-full bg-blue-600/15 blur-[110px] pointer-events-none" />
         <div className="relative max-w-3xl mx-auto px-6 text-center">
           <h2 className="reveal text-3xl sm:text-4xl font-semibold text-white tracking-tight font-['Space_Grotesk',sans-serif] mb-5">
             Bring order to your support queue.
@@ -227,15 +258,15 @@ export default function LandingPage() {
           <p className="reveal text-slate-400 mb-9 max-w-md mx-auto">
             Set up your first queue in minutes. No credit card, no sales call.
           </p>
-          <Link to="/register" className="reveal inline-block bg-white text-[#0B1F3A] font-medium text-sm px-6 py-3 rounded-lg hover:bg-slate-100 transition-all hover:shadow-lg hover:shadow-blue-500/20">
+          <Link to="/register" className="reveal inline-block bg-white text-[#0B1F3A] font-medium text-sm px-6 py-3 rounded-lg hover:shadow-[0_0_40px_rgba(59,130,246,0.5)] transition-all">
             Start a pilot
           </Link>
         </div>
       </section>
 
-      <footer className="max-w-6xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-slate-500">
-        <span className="font-['Space_Grotesk',sans-serif] text-slate-700 font-semibold">
-          HelpDesk <span className="text-blue-600">Pro</span>
+      <footer className="relative max-w-6xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-slate-500 border-t border-white/5">
+        <span className="font-['Space_Grotesk',sans-serif] text-white font-semibold">
+          HelpDesk <span className="text-blue-400">Pro</span>
         </span>
         <span>&copy; {new Date().getFullYear()} HelpDesk Pro. All rights reserved.</span>
       </footer>
