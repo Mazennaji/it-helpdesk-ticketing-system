@@ -300,7 +300,15 @@ export default function TicketList() {
                     </td>
                     <td className="px-5 py-3">
                       {(() => {
-                        const sla = evaluateSla(t);
+                        const sla = t.sla
+                          ? {
+                              state: t.sla.state,
+                              dueAt: new Date(t.sla.dueAt),
+                              targetHours: t.sla.targetHours,
+                              hoursRemaining: t.sla.hoursRemaining,
+                              isResolved: t.sla.state === "Met" || t.sla.state === "Missed",
+                            }
+                          : evaluateSla(t);
                         const style = SLA_STYLES[sla.state] || SLA_STYLES.OnTrack;
                         return (
                           <span
