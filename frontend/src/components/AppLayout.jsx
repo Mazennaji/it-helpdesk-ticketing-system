@@ -79,8 +79,8 @@ export default function AppLayout({ title, subtitle, children }) {
               <p className="text-sm font-medium text-slate-800">{user?.fullName}</p>
               <p className="text-xs text-slate-500">{user?.roles?.join(", ")}</p>
             </div>
-            <div className="w-9 h-9 rounded-full bg-[#0B1F3A] text-white flex items-center justify-center text-sm font-semibold">
-              {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
+            <div className="w-9 h-9 shrink-0 rounded-full bg-[#0B1F3A] text-white flex items-center justify-center text-sm font-semibold leading-none tracking-normal select-none">
+              <span className="leading-none">{user?.fullName?.trim()?.charAt(0)?.toUpperCase() || "U"}</span>
             </div>
             <button
               onClick={logout}
