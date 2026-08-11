@@ -4,6 +4,7 @@ import gsap from "gsap";
 import AppLayout from "../components/AppLayout";
 import { useAuth } from "../context/AuthContext";
 import { fetchTickets, fetchCategories, fetchPriorities, fetchStatuses } from "../api/ticketService";
+import { evaluateSla, formatRemaining, SLA_STYLES } from "../utils/sla";
 
 const STAFF_ROLES = ["Admin", "IT Support Agent", "Manager"];
 
@@ -248,19 +249,20 @@ export default function TicketList() {
                 <th className="px-5 py-3 font-medium">Category</th>
                 <th className="px-5 py-3 font-medium">Priority</th>
                 <th className="px-5 py-3 font-medium">Status</th>
+                <th className="px-5 py-3 font-medium">SLA</th>
                 <th className="px-5 py-3 font-medium">Assigned</th>
                 <th className="px-5 py-3 font-medium">Created</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={7} className="px-5 py-10 text-center text-slate-400">Loading tickets...</td></tr>
+                <tr><td colSpan={8} className="px-5 py-10 text-center text-slate-400">Loading tickets...</td></tr>
               )}
               {!loading && error && (
-                <tr><td colSpan={7} className="px-5 py-10 text-center text-red-500">{error}</td></tr>
+                <tr><td colSpan={8} className="px-5 py-10 text-center text-red-500">{error}</td></tr>
               )}
               {!loading && !error && tickets.length === 0 && (
-                <tr><td colSpan={7} className="px-5 py-10 text-center text-slate-400">No tickets found.</td></tr>
+                <tr><td colSpan={8} className="px-5 py-10 text-center text-slate-400">No tickets found.</td></tr>
               )}
               {!loading && !error && tickets.map((t) => {
                 const pc = priorityColors[t.priority] || priorityColors.Low;
@@ -295,6 +297,22 @@ export default function TicketList() {
                       >
                         {t.status}
                       </span>
+                    </td>
+                    <td className="px-5 py-3">
+                      {(() => {
+                        const sla = evaluateSla(t);
+                        const style = SLA_STYLES[sla.state] || SLA_STYLES.OnTrack;
+                        return (
+                          <span
+                            className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full"
+                            style={{ backgroundColor: style.bg, color: style.text }}
+                            title={`Target ${sla.targetHours}h · due ${sla.dueAt.toLocaleString()}`}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: style.dot }} />
+                            {sla.isResolved ? style.label : formatRemaining(sla.hoursRemaining)}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-5 py-3 text-slate-600">{t.assignedToName || "Unassigned"}</td>
                     <td className="px-5 py-3 text-slate-500">
