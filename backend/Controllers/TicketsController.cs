@@ -2,6 +2,7 @@ using Backend.Data;
 using Backend.DTOs;
 using Backend.Helpers;
 using Backend.Models;
+using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,17 +17,20 @@ namespace Backend.Controllers
         private readonly ApplicationDbContext _db;
         private readonly IActivityLogService _activityLog;
         private readonly INotificationService _notifications;
+        private readonly ISlaService _sla;
 
         private static readonly string[] StaffRoles = { "Admin", "IT Support Agent", "Manager" };
 
         public TicketsController(
             ApplicationDbContext db,
             IActivityLogService activityLog,
-            INotificationService notifications)
+            INotificationService notifications,
+            ISlaService sla)
         {
             _db = db;
             _activityLog = activityLog;
             _notifications = notifications;
+            _sla = sla;
         }
 
         [HttpPost]
@@ -103,23 +107,39 @@ namespace Backend.Controllers
 
             var totalCount = await query.CountAsync();
 
-            var items = await query
+            var rows = await query
                 .OrderByDescending(t => t.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(t => new TicketListItemDto
+                .Select(t => new
                 {
-                    TicketId = t.TicketId,
-                    ReferenceNo = t.ReferenceNo,
-                    Title = t.Title,
+                    t.TicketId,
+                    t.ReferenceNo,
+                    t.Title,
                     Category = t.Category!.Name,
                     Priority = t.Priority!.Name,
                     Status = t.Status!.Name,
                     CreatedByName = t.Creator!.FullName,
                     AssignedToName = t.Assignee != null ? t.Assignee.FullName : null,
-                    CreatedAt = t.CreatedAt,
+                    t.CreatedAt,
+                    t.UpdatedAt,
+                    t.ResolvedAt,
                 })
                 .ToListAsync();
+
+            var items = rows.Select(t => new TicketListItemDto
+            {
+                TicketId = t.TicketId,
+                ReferenceNo = t.ReferenceNo,
+                Title = t.Title,
+                Category = t.Category,
+                Priority = t.Priority,
+                Status = t.Status,
+                CreatedByName = t.CreatedByName,
+                AssignedToName = t.AssignedToName,
+                CreatedAt = t.CreatedAt,
+                Sla = _sla.Evaluate(t.Priority, t.Status, t.CreatedAt, t.ResolvedAt, t.UpdatedAt).ToDto(),
+            }).ToList();
 
             return Ok(new PagedResult<TicketListItemDto>
             {
@@ -313,7 +333,7 @@ namespace Backend.Controllers
 
         private async Task<TicketDetailDto?> GetDetailDto(int id)
         {
-            return await _db.Tickets
+            var dto = await _db.Tickets
                 .Include(t => t.Category)
                 .Include(t => t.Priority)
                 .Include(t => t.Status)
@@ -338,6 +358,15 @@ namespace Backend.Controllers
                     ResolvedAt = t.ResolvedAt,
                 })
                 .FirstOrDefaultAsync();
+
+            if (dto != null)
+            {
+                dto.Sla = _sla
+                    .Evaluate(dto.Priority.Name, dto.Status.Name, dto.CreatedAt, dto.ResolvedAt, dto.UpdatedAt)
+                    .ToDto();
+            }
+
+            return dto;
         }
     }
 }
