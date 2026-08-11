@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import gsap from "gsap";
 import AppLayout from "../components/AppLayout";
 import { useAuth } from "../context/AuthContext";
@@ -33,11 +33,18 @@ export default function TicketList() {
   const { user } = useAuth();
   const isStaff = user?.roles?.some((r) => STAFF_ROLES.includes(r));
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [tickets, setTickets] = useState([]);
   const [categories, setCategories] = useState([]);
   const [priorities, setPriorities] = useState([]);
   const [statuses, setStatuses] = useState([]);
-  const [filters, setFilters] = useState({ search: "", categoryId: "", priorityId: "", statusId: "" });
+  const [filters, setFilters] = useState({
+    search: searchParams.get("q") || "",
+    categoryId: "",
+    priorityId: "",
+    statusId: "",
+  });
   const [assignedToMe, setAssignedToMe] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -59,6 +66,12 @@ export default function TicketList() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const q = searchParams.get("q") || "";
+    setFilters((f) => (f.search === q ? f : { ...f, search: q }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     setLoading(true);
@@ -117,8 +130,16 @@ export default function TicketList() {
     return () => ctx.revert();
   }, [loading, tickets]);
 
-  const handleFilterChange = (e) =>
-    setFilters((f) => ({ ...f, [e.target.name]: e.target.value }));
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters((f) => ({ ...f, [name]: value }));
+    if (name === "search") {
+      const next = new URLSearchParams(searchParams);
+      if (value) next.set("q", value);
+      else next.delete("q");
+      setSearchParams(next, { replace: true });
+    }
+  };
 
   const onRowEnter = (el) => gsap.to(el, { backgroundColor: "#F8FAFC", duration: 0.15 });
   const onRowLeave = (el) => gsap.to(el, { backgroundColor: "#FFFFFF", duration: 0.15 });
