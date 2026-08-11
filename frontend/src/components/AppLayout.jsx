@@ -1,11 +1,11 @@
 import { useAuth } from "../context/AuthContext";
 import { Link, useLocation } from "react-router-dom";
 import NotificationBell from "./NotificationBell";
+import AssistantWidget from "./AssistantWidget";
 
 const navItems = [
   { label: "Dashboard", path: "/dashboard" },
   { label: "Tickets", path: "/tickets" },
-  { label: "IT Assistant", path: "/assistant" },
   { label: "Reports", path: "/reports" },
   { label: "Knowledge Base", path: "/knowledge-base" },
   { label: "Settings", path: "/settings" },
@@ -93,6 +93,8 @@ export default function AppLayout({ title, subtitle, children }) {
 
         <main className="flex-1 p-6 md:p-8">{children}</main>
       </div>
+
+      <AssistantWidget />
     </div>
   );
 }
