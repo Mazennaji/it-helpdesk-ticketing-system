@@ -87,6 +87,8 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddScoped<Backend.Services.ISlaService, Backend.Services.SlaService>();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
