@@ -5,7 +5,6 @@ namespace Backend.DTOs
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
     }
-
     public class CreateTicketDto
     {
         public string Title { get; set; } = string.Empty;
@@ -13,7 +12,6 @@ namespace Backend.DTOs
         public int CategoryId { get; set; }
         public int PriorityId { get; set; }
     }
-
     public class UpdateTicketDto
     {
         public string Title { get; set; } = string.Empty;
@@ -23,7 +21,6 @@ namespace Backend.DTOs
         public int StatusId { get; set; }
         public int? AssignedTo { get; set; }
     }
-
     public class TicketListItemDto
     {
         public int TicketId { get; set; }
@@ -35,8 +32,8 @@ namespace Backend.DTOs
         public string CreatedByName { get; set; } = string.Empty;
         public string? AssignedToName { get; set; }
         public DateTime CreatedAt { get; set; }
+        public SlaDto? Sla { get; set; }
     }
-
     public class TicketDetailDto
     {
         public int TicketId { get; set; }
@@ -53,8 +50,8 @@ namespace Backend.DTOs
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public DateTime? ResolvedAt { get; set; }
+        public SlaDto? Sla { get; set; }
     }
-
     public class PagedResult<T>
     {
         public List<T> Items { get; set; } = new();
