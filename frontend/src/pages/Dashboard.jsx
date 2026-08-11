@@ -15,6 +15,7 @@ import {
   Cell,
 } from "recharts";
 import AppLayout from "../components/AppLayout";
+import SlaSummaryStrip from "../components/SlaSummaryStrip";
 import { useAuth } from "../context/AuthContext";
 import {
   fetchDashboardSummary,
@@ -131,6 +132,8 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
+
+        <SlaSummaryStrip />
 
         <div ref={chartRef} className="bg-white rounded-xl border border-slate-200 p-8 mb-6">
           <div className="flex items-center justify-between mb-6">
