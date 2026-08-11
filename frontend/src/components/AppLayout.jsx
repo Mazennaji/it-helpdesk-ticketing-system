@@ -5,6 +5,7 @@ import NotificationBell from "./NotificationBell";
 const navItems = [
   { label: "Dashboard", path: "/dashboard" },
   { label: "Tickets", path: "/tickets" },
+  { label: "IT Assistant", path: "/assistant" },
   { label: "Reports", path: "/reports" },
   { label: "Knowledge Base", path: "/knowledge-base" },
   { label: "Settings", path: "/settings" },
