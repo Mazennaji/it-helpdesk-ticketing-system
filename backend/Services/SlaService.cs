@@ -18,11 +18,20 @@ namespace Backend.Services
         public double HoursRemaining { get; set; }
         public int TargetHours { get; set; }
         public bool IsResolved { get; set; }
+
+        public Backend.DTOs.SlaDto ToDto() => new()
+        {
+            DueAt = DueAt.ToString("o"),
+            State = State.ToString(),
+            HoursRemaining = HoursRemaining,
+            TargetHours = TargetHours,
+        };
     }
 
     public interface ISlaService
     {
         SlaInfo Evaluate(Ticket ticket);
+        SlaInfo Evaluate(string? priorityName, string? statusName, DateTime createdAt, DateTime? resolvedAt, DateTime updatedAt);
         int TargetHoursFor(string? priorityName);
     }
 
@@ -49,9 +58,18 @@ namespace Backend.Services
 
         public SlaInfo Evaluate(Ticket ticket)
         {
-            var target = TargetHoursFor(ticket.Priority?.Name);
-            var dueAt = ticket.CreatedAt.AddHours(target);
-            var statusName = ticket.Status?.Name;
+            return Evaluate(
+                ticket.Priority?.Name,
+                ticket.Status?.Name,
+                ticket.CreatedAt,
+                ticket.ResolvedAt,
+                ticket.UpdatedAt);
+        }
+
+        public SlaInfo Evaluate(string? priorityName, string? statusName, DateTime createdAt, DateTime? resolvedAt, DateTime updatedAt)
+        {
+            var target = TargetHoursFor(priorityName);
+            var dueAt = createdAt.AddHours(target);
             var isResolved = statusName != null && ClosedStatuses.Contains(statusName, StringComparer.OrdinalIgnoreCase);
 
             var info = new SlaInfo
@@ -63,7 +81,7 @@ namespace Backend.Services
 
             if (isResolved)
             {
-                var completedAt = ticket.ResolvedAt ?? ticket.UpdatedAt;
+                var completedAt = resolvedAt ?? updatedAt;
                 info.State = completedAt <= dueAt ? SlaState.Met : SlaState.Missed;
                 info.HoursRemaining = 0;
                 return info;
