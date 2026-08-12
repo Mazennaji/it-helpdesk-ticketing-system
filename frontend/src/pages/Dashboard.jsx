@@ -38,6 +38,14 @@ const PRIORITY_COLORS = {
   Critical: "#EF4444",
 };
 
+const tooltipStyle = {
+  fontSize: 12,
+  borderRadius: 8,
+  border: "1px solid rgba(255,255,255,0.1)",
+  background: "#0E1B33",
+  color: "#E2E8F0",
+};
+
 export default function Dashboard() {
   const { user } = useAuth();
   const [summary, setSummary] = useState(null);
@@ -115,17 +123,17 @@ export default function Dashboard() {
               ref={(el) => (cardRefs.current[i] = el)}
               onMouseEnter={() => onCardEnter(i)}
               onMouseLeave={() => onCardLeave(i)}
-              className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm transition-shadow hover:shadow-md"
+              className="rounded-xl border border-white/8 bg-[#0E1B33] p-5 transition-all hover:border-white/15"
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">
                   {stat.label}
                 </span>
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: stat.accent }} />
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: stat.accent, boxShadow: `0 0 10px ${stat.accent}` }} />
               </div>
               <p
                 ref={(el) => (valueRefs.current[i] = el)}
-                className="text-3xl font-semibold text-slate-900 tracking-tight"
+                className="text-3xl font-semibold text-white tracking-tight"
               >
                 0
               </p>
@@ -135,18 +143,18 @@ export default function Dashboard() {
 
         <SlaSummaryStrip />
 
-        <div ref={chartRef} className="bg-white rounded-xl border border-slate-200 p-8 mb-6">
+        <div ref={chartRef} className="rounded-xl border border-white/8 bg-[#0E1B33] p-8 mb-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-sm font-semibold text-slate-800">Ticket Volume Trend</h2>
-            <span className="text-xs text-slate-400">Last 30 days</span>
+            <h2 className="text-sm font-semibold text-white">Ticket Volume Trend</h2>
+            <span className="text-xs text-slate-500">Last 30 days</span>
           </div>
           <div style={{ width: "100%", height: 260 }}>
             <ResponsiveContainer>
               <LineChart data={trend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#EEF2F6" />
-                <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #E2E8F0" }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={tooltipStyle} />
                 <Line type="monotone" dataKey="count" stroke="#3B82F6" strokeWidth={2.5} dot={false} />
               </LineChart>
             </ResponsiveContainer>
@@ -154,23 +162,23 @@ export default function Dashboard() {
         </div>
 
         <div ref={breakdownRef} className="grid lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl border border-slate-200 p-8">
-            <h2 className="text-sm font-semibold text-slate-800 mb-6">Tickets by Category</h2>
+          <div className="rounded-xl border border-white/8 bg-[#0E1B33] p-8">
+            <h2 className="text-sm font-semibold text-white mb-6">Tickets by Category</h2>
             <div style={{ width: "100%", height: 240 }}>
               <ResponsiveContainer>
                 <BarChart data={byCategory} layout="vertical" margin={{ left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#EEF2F6" horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <YAxis type="category" dataKey="label" tick={{ fontSize: 11, fill: "#475569" }} axisLine={false} tickLine={false} width={90} />
-                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #E2E8F0" }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <YAxis type="category" dataKey="label" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} width={90} />
+                  <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
                   <Bar dataKey="count" fill="#3B82F6" radius={[0, 4, 4, 0]} barSize={16} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 p-8">
-            <h2 className="text-sm font-semibold text-slate-800 mb-6">Tickets by Priority</h2>
+          <div className="rounded-xl border border-white/8 bg-[#0E1B33] p-8">
+            <h2 className="text-sm font-semibold text-white mb-6">Tickets by Priority</h2>
             <div style={{ width: "100%", height: 240 }}>
               <ResponsiveContainer>
                 <PieChart>
@@ -181,18 +189,19 @@ export default function Dashboard() {
                     innerRadius={55}
                     outerRadius={85}
                     paddingAngle={2}
+                    stroke="#0E1B33"
                   >
                     {byPriority.map((entry) => (
                       <Cell key={entry.label} fill={PRIORITY_COLORS[entry.label] || "#94A3B8"} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #E2E8F0" }} />
+                  <Tooltip contentStyle={tooltipStyle} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
             <div className="flex flex-wrap gap-3 justify-center mt-2">
               {byPriority.map((entry) => (
-                <span key={entry.label} className="flex items-center gap-1.5 text-xs text-slate-600">
+                <span key={entry.label} className="flex items-center gap-1.5 text-xs text-slate-400">
                   <span
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: PRIORITY_COLORS[entry.label] || "#94A3B8" }}
