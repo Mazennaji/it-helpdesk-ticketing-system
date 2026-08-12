@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import NotificationBell from "./NotificationBell";
 import AssistantWidget from "./AssistantWidget";
+import { AuroraBackdrop } from "./premium";
 
 const iconProps = {
   width: 18,
@@ -200,8 +201,9 @@ export default function AppLayout({ title, subtitle, children }) {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#0B152A]">
-      <aside className="hidden md:flex md:w-64 flex-col bg-gradient-to-b from-[#0B1F3A] to-[#0A1B33] text-slate-300 px-4 py-6 border-r border-white/5">
+    <div className="min-h-screen flex bg-[#070C18] relative">
+      <AuroraBackdrop cursorGlow />
+      <aside className="hidden md:flex md:w-64 flex-col bg-white/[0.02] backdrop-blur-xl text-slate-300 px-4 py-6 border-r border-white/8 relative z-10">
         <SidebarContent user={user} location={location} />
       </aside>
 
@@ -211,7 +213,7 @@ export default function AppLayout({ title, subtitle, children }) {
             className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm animate-[fadeIn_0.15s_ease-out]"
             onClick={() => setDrawerOpen(false)}
           />
-          <aside className="absolute left-0 top-0 h-full w-64 flex flex-col bg-gradient-to-b from-[#0B1F3A] to-[#0A1B33] text-slate-300 px-4 py-6 shadow-2xl animate-[slideInLeft_0.2s_ease-out]">
+          <aside className="absolute left-0 top-0 h-full w-64 flex flex-col bg-[#0A1120] backdrop-blur-xl text-slate-300 px-4 py-6 shadow-2xl border-r border-white/10 animate-[slideInLeft_0.2s_ease-out]">
             <button
               onClick={() => setDrawerOpen(false)}
               className="absolute top-5 right-4 w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
@@ -230,8 +232,9 @@ export default function AppLayout({ title, subtitle, children }) {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-30 bg-[#0B152A]/80 backdrop-blur-md border-b border-white/8">
+      <div className="flex-1 flex flex-col min-w-0 relative z-10">
+        <header className="sticky top-0 z-30 bg-[#070C18]/70 backdrop-blur-xl border-b border-white/8">
+          <div className="absolute inset-x-0 bottom-0 neon-line opacity-30" />
           <div className="px-4 md:px-8 h-16 flex items-center gap-3 md:gap-4">
             <button
               onClick={() => setDrawerOpen(true)}
