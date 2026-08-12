@@ -7,6 +7,9 @@ import { useAuth } from "../context/AuthContext";
 
 const STAFF_ROLES = ["Admin", "IT Support Agent", "Manager"];
 
+const inputCls = "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-blue-400/40 focus:ring-2 focus:ring-blue-500/10";
+const selectCls = "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 outline-none focus:border-blue-400/40 [&>option]:bg-[#0E1B33]";
+
 export default function CreateTicket() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -33,8 +36,7 @@ export default function CreateTicket() {
     });
   }, []);
 
-  const handleChange = (e) =>
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
   const handleSuggest = async () => {
     if (!form.description.trim() || classifying) return;
@@ -46,11 +48,7 @@ export default function CreateTicket() {
         setAiHint("Couldn't confidently categorize this yet. Add more detail or set it manually.");
         return;
       }
-      setForm((f) => ({
-        ...f,
-        categoryId: s.categoryId,
-        priorityId: s.priorityId ?? f.priorityId,
-      }));
+      setForm((f) => ({ ...f, categoryId: s.categoryId, priorityId: s.priorityId ?? f.priorityId }));
       const confident = s.confidence >= 0.7;
       if (isStaff && confident) {
         setAiHint(`Auto-filled: ${s.category} / ${s.priority}. ${s.reasoning || ""}`);
@@ -85,52 +83,35 @@ export default function CreateTicket() {
 
   return (
     <AppLayout title="Create Ticket" subtitle="Submit a new support request">
-      <div className="bg-white rounded-xl border border-slate-200 p-6 max-w-2xl">
+      <div className="rounded-xl border border-white/8 bg-[#0E1B33] p-6 max-w-2xl">
         {error && (
-          <div className="mb-5 rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+          <div className="mb-5 rounded-md bg-red-500/10 border border-red-500/20 px-3 py-2 text-sm text-red-300">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Title</label>
-            <input
-              type="text"
-              name="title"
-              required
-              value={form.title}
-              onChange={handleChange}
-              placeholder="Short summary of the issue"
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
-            />
+            <label className="block text-sm font-medium text-slate-300 mb-1">Title</label>
+            <input type="text" name="title" required value={form.title} onChange={handleChange}
+              placeholder="Short summary of the issue" className={inputCls} />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-slate-700">Description</label>
-              <button
-                type="button"
-                onClick={handleSuggest}
-                disabled={classifying || !form.description.trim()}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
+              <label className="block text-sm font-medium text-slate-300">Description</label>
+              <button type="button" onClick={handleSuggest} disabled={classifying || !form.description.trim()}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-400 hover:text-blue-300 disabled:opacity-40 disabled:cursor-not-allowed">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 3l1.9 5.8L20 10l-5.1 3.7L16 20l-4-3.5L8 20l1.1-6.3L4 10l6.1-1.2z" />
                 </svg>
                 {classifying ? "Analyzing..." : "Suggest category & priority"}
               </button>
             </div>
-            <textarea
-              name="description"
-              rows={5}
-              value={form.description}
-              onChange={handleChange}
-              placeholder="Describe the issue in as much detail as possible"
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
-            />
+            <textarea name="description" rows={5} value={form.description} onChange={handleChange}
+              placeholder="Describe the issue in as much detail as possible" className={inputCls} />
             {aiHint && (
-              <p className="mt-2 text-xs text-slate-500 bg-blue-50/60 border border-blue-100 rounded-md px-3 py-2">
+              <p className="mt-2 text-xs text-slate-400 bg-blue-500/10 border border-blue-500/20 rounded-md px-3 py-2">
                 {aiHint}
               </p>
             )}
@@ -138,39 +119,22 @@ export default function CreateTicket() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
-              <select
-                name="categoryId"
-                value={form.categoryId}
-                onChange={handleChange}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
+              <label className="block text-sm font-medium text-slate-300 mb-1">Category</label>
+              <select name="categoryId" value={form.categoryId} onChange={handleChange} className={selectCls}>
+                {categories.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
-              <select
-                name="priorityId"
-                value={form.priorityId}
-                onChange={handleChange}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
-              >
-                {priorities.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
+              <label className="block text-sm font-medium text-slate-300 mb-1">Priority</label>
+              <select name="priorityId" value={form.priorityId} onChange={handleChange} className={selectCls}>
+                {priorities.map((p) => (<option key={p.id} value={p.id}>{p.name}</option>))}
               </select>
             </div>
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="bg-[#0B1F3A] text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-[#132a4d] disabled:opacity-60 transition-colors"
-            >
+            <button type="submit" disabled={submitting}
+              className="bg-white text-[#0B1F3A] text-sm font-medium px-5 py-2.5 rounded-lg hover:shadow-[0_0_24px_rgba(59,130,246,0.35)] disabled:opacity-60 transition-all">
               {submitting ? "Submitting..." : "Submit Ticket"}
             </button>
           </div>
