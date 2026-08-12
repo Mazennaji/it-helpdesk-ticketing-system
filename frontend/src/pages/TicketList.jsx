@@ -9,18 +9,26 @@ import { evaluateSla, formatRemaining, SLA_STYLES } from "../utils/sla";
 const STAFF_ROLES = ["Admin", "IT Support Agent", "Manager"];
 
 const priorityColors = {
-  Low: { bg: "#F1F5F9", text: "#475569", dot: "#94A3B8" },
-  Medium: { bg: "#DBEAFE", text: "#1D4ED8", dot: "#3B82F6" },
-  High: { bg: "#FEF3C7", text: "#B45309", dot: "#F59E0B" },
-  Critical: { bg: "#FEE2E2", text: "#B91C1C", dot: "#EF4444" },
+  Low: { bg: "rgba(148,163,184,0.15)", text: "#CBD5E1", dot: "#94A3B8" },
+  Medium: { bg: "rgba(59,130,246,0.15)", text: "#93C5FD", dot: "#3B82F6" },
+  High: { bg: "rgba(245,158,11,0.15)", text: "#FCD34D", dot: "#F59E0B" },
+  Critical: { bg: "rgba(239,68,68,0.15)", text: "#FCA5A5", dot: "#EF4444" },
 };
 
 const statusColors = {
-  Open: { bg: "#DBEAFE", text: "#1D4ED8" },
-  "In Progress": { bg: "#FEF3C7", text: "#B45309" },
-  Pending: { bg: "#F1F5F9", text: "#475569" },
-  Resolved: { bg: "#D1FAE5", text: "#047857" },
-  Closed: { bg: "#E2E8F0", text: "#64748B" },
+  Open: { bg: "rgba(59,130,246,0.15)", text: "#93C5FD" },
+  "In Progress": { bg: "rgba(245,158,11,0.15)", text: "#FCD34D" },
+  Pending: { bg: "rgba(139,92,246,0.15)", text: "#C4B5FD" },
+  Resolved: { bg: "rgba(16,185,129,0.15)", text: "#6EE7B7" },
+  Closed: { bg: "rgba(100,116,139,0.15)", text: "#CBD5E1" },
+};
+
+const SLA_DARK = {
+  Breached: { bg: "rgba(239,68,68,0.15)", text: "#FCA5A5", dot: "#EF4444" },
+  DueSoon: { bg: "rgba(245,158,11,0.15)", text: "#FCD34D", dot: "#F59E0B" },
+  OnTrack: { bg: "rgba(16,185,129,0.15)", text: "#6EE7B7", dot: "#10B981" },
+  Met: { bg: "rgba(148,163,184,0.15)", text: "#CBD5E1", dot: "#94A3B8" },
+  Missed: { bg: "rgba(239,68,68,0.15)", text: "#FCA5A5", dot: "#EF4444" },
 };
 
 const statCards = [
@@ -142,11 +150,13 @@ export default function TicketList() {
     }
   };
 
-  const onRowEnter = (el) => gsap.to(el, { backgroundColor: "#F8FAFC", duration: 0.15 });
-  const onRowLeave = (el) => gsap.to(el, { backgroundColor: "#FFFFFF", duration: 0.15 });
+  const onRowEnter = (el) => gsap.to(el, { backgroundColor: "rgba(255,255,255,0.03)", duration: 0.15 });
+  const onRowLeave = (el) => gsap.to(el, { backgroundColor: "rgba(0,0,0,0)", duration: 0.15 });
 
   const onBtnEnter = () => gsap.to(newBtnRef.current, { scale: 1.03, duration: 0.2, ease: "power2.out" });
   const onBtnLeave = () => gsap.to(newBtnRef.current, { scale: 1, duration: 0.2, ease: "power2.out" });
+
+  const selectCls = "rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 outline-none focus:border-blue-400/40 [&>option]:bg-[#0E1B33]";
 
   return (
     <AppLayout title="Tickets" subtitle="All support requests across your queue">
@@ -156,17 +166,17 @@ export default function TicketList() {
             <div
               key={s.key}
               ref={(el) => (statRefs.current[i] = el)}
-              className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm transition-shadow hover:shadow-md"
+              className="rounded-xl border border-white/8 bg-[#0E1B33] p-5 transition-all hover:border-white/15"
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">
                   {s.label}
                 </span>
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.accent }} />
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.accent, boxShadow: `0 0 10px ${s.accent}` }} />
               </div>
               <p
                 ref={(el) => (valueRefs.current[i] = el)}
-                className="text-3xl font-semibold text-slate-900 tracking-tight"
+                className="text-3xl font-semibold text-white tracking-tight"
               >
                 0
               </p>
@@ -176,7 +186,7 @@ export default function TicketList() {
 
         <div
           ref={filterBarRef}
-          className="bg-white rounded-xl border border-slate-200 p-5 mb-5 flex flex-wrap gap-3 items-center"
+          className="rounded-xl border border-white/8 bg-[#0E1B33] p-5 mb-5 flex flex-wrap gap-3 items-center"
         >
           <input
             type="text"
@@ -184,48 +194,23 @@ export default function TicketList() {
             value={filters.search}
             onChange={handleFilterChange}
             placeholder="Search by title or reference no..."
-            className="flex-1 min-w-[220px] rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+            className="flex-1 min-w-[220px] rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-blue-400/40 focus:ring-4 focus:ring-blue-500/10"
           />
-          <select
-            name="categoryId"
-            value={filters.categoryId}
-            onChange={handleFilterChange}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
-          >
+          <select name="categoryId" value={filters.categoryId} onChange={handleFilterChange} className={selectCls}>
             <option value="">All categories</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
+            {categories.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
           </select>
-          <select
-            name="priorityId"
-            value={filters.priorityId}
-            onChange={handleFilterChange}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
-          >
+          <select name="priorityId" value={filters.priorityId} onChange={handleFilterChange} className={selectCls}>
             <option value="">All priorities</option>
-            {priorities.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
+            {priorities.map((p) => (<option key={p.id} value={p.id}>{p.name}</option>))}
           </select>
-          <select
-            name="statusId"
-            value={filters.statusId}
-            onChange={handleFilterChange}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
-          >
+          <select name="statusId" value={filters.statusId} onChange={handleFilterChange} className={selectCls}>
             <option value="">All statuses</option>
-            {statuses.map((st) => (
-              <option key={st.id} value={st.id}>{st.name}</option>
-            ))}
+            {statuses.map((st) => (<option key={st.id} value={st.id}>{st.name}</option>))}
           </select>
           {isStaff && (
-            <label className="flex items-center gap-2 text-sm text-slate-600 px-1">
-              <input
-                type="checkbox"
-                checked={assignedToMe}
-                onChange={(e) => setAssignedToMe(e.target.checked)}
-              />
+            <label className="flex items-center gap-2 text-sm text-slate-400 px-1">
+              <input type="checkbox" checked={assignedToMe} onChange={(e) => setAssignedToMe(e.target.checked)} />
               Assigned to me
             </label>
           )}
@@ -234,16 +219,16 @@ export default function TicketList() {
             to="/tickets/new"
             onMouseEnter={onBtnEnter}
             onMouseLeave={onBtnLeave}
-            className="ml-auto bg-[#0B1F3A] text-white text-sm font-medium px-4 py-2 rounded-lg shadow-lg shadow-blue-950/10 hover:bg-[#132a4d] transition-colors inline-block"
+            className="ml-auto bg-white text-[#0B1F3A] text-sm font-medium px-4 py-2 rounded-lg hover:shadow-[0_0_24px_rgba(59,130,246,0.35)] transition-all inline-block"
           >
             + New Ticket
           </Link>
         </div>
 
-        <div ref={tableRef} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div ref={tableRef} className="rounded-xl border border-white/8 bg-[#0E1B33] overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-left text-xs text-slate-500 uppercase tracking-wide">
+              <tr className="bg-white/[0.03] border-b border-white/8 text-left text-xs text-slate-400 uppercase tracking-wide">
                 <th className="px-5 py-3 font-medium">Reference</th>
                 <th className="px-5 py-3 font-medium">Title</th>
                 <th className="px-5 py-3 font-medium">Category</th>
@@ -256,13 +241,13 @@ export default function TicketList() {
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={8} className="px-5 py-10 text-center text-slate-400">Loading tickets...</td></tr>
+                <tr><td colSpan={8} className="px-5 py-10 text-center text-slate-500">Loading tickets...</td></tr>
               )}
               {!loading && error && (
-                <tr><td colSpan={8} className="px-5 py-10 text-center text-red-500">{error}</td></tr>
+                <tr><td colSpan={8} className="px-5 py-10 text-center text-red-400">{error}</td></tr>
               )}
               {!loading && !error && tickets.length === 0 && (
-                <tr><td colSpan={8} className="px-5 py-10 text-center text-slate-400">No tickets found.</td></tr>
+                <tr><td colSpan={8} className="px-5 py-10 text-center text-slate-500">No tickets found.</td></tr>
               )}
               {!loading && !error && tickets.map((t) => {
                 const pc = priorityColors[t.priority] || priorityColors.Low;
@@ -270,31 +255,25 @@ export default function TicketList() {
                 return (
                   <tr
                     key={t.ticketId}
-                    className="border-b border-slate-100 last:border-0"
+                    className="border-b border-white/5 last:border-0"
                     onMouseEnter={(e) => onRowEnter(e.currentTarget)}
                     onMouseLeave={(e) => onRowLeave(e.currentTarget)}
                   >
                     <td className="px-5 py-3">
-                      <Link to={`/tickets/${t.ticketId}`} className="font-mono text-blue-700 hover:underline">
+                      <Link to={`/tickets/${t.ticketId}`} className="font-mono text-blue-400 hover:text-blue-300 hover:underline">
                         {t.referenceNo}
                       </Link>
                     </td>
-                    <td className="px-5 py-3 text-slate-800">{t.title}</td>
-                    <td className="px-5 py-3 text-slate-600">{t.category}</td>
+                    <td className="px-5 py-3 text-slate-200">{t.title}</td>
+                    <td className="px-5 py-3 text-slate-400">{t.category}</td>
                     <td className="px-5 py-3">
-                      <span
-                        className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full"
-                        style={{ backgroundColor: pc.bg, color: pc.text }}
-                      >
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: pc.bg, color: pc.text }}>
                         <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: pc.dot }} />
                         {t.priority}
                       </span>
                     </td>
                     <td className="px-5 py-3">
-                      <span
-                        className="text-xs font-medium px-2 py-0.5 rounded-full"
-                        style={{ backgroundColor: sc.bg, color: sc.text }}
-                      >
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: sc.bg, color: sc.text }}>
                         {t.status}
                       </span>
                     </td>
@@ -309,7 +288,8 @@ export default function TicketList() {
                               isResolved: t.sla.state === "Met" || t.sla.state === "Missed",
                             }
                           : evaluateSla(t);
-                        const style = SLA_STYLES[sla.state] || SLA_STYLES.OnTrack;
+                        const style = SLA_DARK[sla.state] || SLA_DARK.OnTrack;
+                        const label = SLA_STYLES[sla.state]?.label || sla.state;
                         return (
                           <span
                             className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full"
@@ -317,12 +297,12 @@ export default function TicketList() {
                             title={`Target ${sla.targetHours}h · due ${sla.dueAt.toLocaleString()}`}
                           >
                             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: style.dot }} />
-                            {sla.isResolved ? style.label : formatRemaining(sla.hoursRemaining)}
+                            {sla.isResolved ? label : formatRemaining(sla.hoursRemaining)}
                           </span>
                         );
                       })()}
                     </td>
-                    <td className="px-5 py-3 text-slate-600">{t.assignedToName || "Unassigned"}</td>
+                    <td className="px-5 py-3 text-slate-400">{t.assignedToName || "Unassigned"}</td>
                     <td className="px-5 py-3 text-slate-500">
                       {new Date(t.createdAt).toLocaleDateString()}
                     </td>
