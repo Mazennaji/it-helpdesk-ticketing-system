@@ -8,9 +8,7 @@ import {
 } from "../api/knowledgeBaseService";
 
 const STAFF_ROLES = ["Admin", "IT Support Agent", "Manager"];
-
 const inputCls = "w-full rounded-lg border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400/40 transition";
-
 const emptyDraft = { title: "", category: "", summary: "", body: "", isPublished: true };
 
 function ArticleBody({ text }) {
@@ -23,13 +21,9 @@ function ArticleBody({ text }) {
     const line = raw.trim();
     const ordered = line.match(/^(\d+)[.)]\s*(.*)$/);
     const bullet = line.match(/^[-*•]\s*(.*)$/);
-    if (ordered) {
-      if (!list || list.type !== "ol") { flush(); list = { type: "ol", items: [], key: `ol-${i}` }; }
-      list.items.push(ordered[2]);
-    } else if (bullet) {
-      if (!list || list.type !== "ul") { flush(); list = { type: "ul", items: [], key: `ul-${i}` }; }
-      list.items.push(bullet[1]);
-    } else if (line === "") { flush(); }
+    if (ordered) { if (!list || list.type !== "ol") { flush(); list = { type: "ol", items: [], key: `ol-${i}` }; } list.items.push(ordered[2]); }
+    else if (bullet) { if (!list || list.type !== "ul") { flush(); list = { type: "ul", items: [], key: `ul-${i}` }; } list.items.push(bullet[1]); }
+    else if (line === "") { flush(); }
     else { flush(); blocks.push({ type: "p", text: line, key: `p-${i}` }); }
   });
   flush();
@@ -37,17 +31,8 @@ function ArticleBody({ text }) {
     <div className="text-sm text-slate-300 leading-relaxed space-y-3">
       {blocks.map((b) => {
         if (b.type === "p") return <p key={b.key}>{b.text}</p>;
-        if (b.type === "ol")
-          return (
-            <ol key={b.key} className="list-decimal pl-6 space-y-1.5 marker:text-slate-500 marker:font-medium">
-              {b.items.map((it, idx) => (<li key={idx} className="pl-1">{it}</li>))}
-            </ol>
-          );
-        return (
-          <ul key={b.key} className="list-disc pl-6 space-y-1.5 marker:text-slate-500">
-            {b.items.map((it, idx) => (<li key={idx} className="pl-1">{it}</li>))}
-          </ul>
-        );
+        if (b.type === "ol") return (<ol key={b.key} className="list-decimal pl-6 space-y-1.5 marker:text-slate-500 marker:font-medium">{b.items.map((it, idx) => (<li key={idx} className="pl-1">{it}</li>))}</ol>);
+        return (<ul key={b.key} className="list-disc pl-6 space-y-1.5 marker:text-slate-500">{b.items.map((it, idx) => (<li key={idx} className="pl-1">{it}</li>))}</ul>);
       })}
     </div>
   );
@@ -55,13 +40,10 @@ function ArticleBody({ text }) {
 
 function ArticleCard({ article, onOpen }) {
   return (
-    <button onClick={() => onOpen(article.id)}
-      className="text-left rounded-xl border border-white/8 bg-[#0E1B33] p-5 hover:border-blue-400/30 hover:-translate-y-0.5 transition-all group">
+    <button onClick={() => onOpen(article.id)} className="text-left glass glass-hover-lift p-5 group">
       <div className="flex items-center gap-2 mb-2.5">
         <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-500/15 text-blue-300">{article.category || "General"}</span>
-        {!article.isPublished && (
-          <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/15 text-amber-300">Draft</span>
-        )}
+        {!article.isPublished && (<span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/15 text-amber-300">Draft</span>)}
       </div>
       <h3 className="text-sm font-semibold text-white mb-1.5 group-hover:text-blue-300 transition-colors">{article.title}</h3>
       <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">{article.summary}</p>
@@ -78,7 +60,6 @@ export default function KnowledgeBase() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [loading, setLoading] = useState(true);
-
   const [selected, setSelected] = useState(null);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -106,28 +87,20 @@ export default function KnowledgeBase() {
   useEffect(() => {
     if (loading) return;
     const ctx = gsap.context(() => {
-      gsap.fromTo(gridRef.current?.children || [], { y: 16, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.4, stagger: 0.05, ease: "power3.out" });
+      gsap.fromTo(gridRef.current?.children || [], { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, stagger: 0.05, ease: "power3.out" });
     }, rootRef);
     return () => ctx.revert();
   }, [loading, articles]);
 
-  const openArticle = async (id) => {
-    try { setSelected(await fetchArticle(id)); } catch { /* ignore */ }
-  };
-
+  const openArticle = async (id) => { try { setSelected(await fetchArticle(id)); } catch { /* ignore */ } };
   const startCreate = () => setEditing({ ...emptyDraft });
   const startEdit = (article) => { setSelected(null); setEditing({ ...article }); };
 
   const saveDraft = async () => {
     if (!editing.title.trim()) return;
     setSaving(true);
-    try {
-      if (editing.id) await updateArticle(editing.id, editing);
-      else await createArticle(editing);
-      setEditing(null); load();
-    } catch { /* ignore */ }
-    finally { setSaving(false); }
+    try { if (editing.id) await updateArticle(editing.id, editing); else await createArticle(editing); setEditing(null); load(); }
+    catch { /* ignore */ } finally { setSaving(false); }
   };
 
   const removeArticle = async (id) => {
@@ -139,18 +112,16 @@ export default function KnowledgeBase() {
 
   return (
     <AppLayout title="Knowledge Base" subtitle="Search guides and solutions, or browse by category">
-      <div ref={rootRef}>
+      <div ref={rootRef} className="relative z-10">
         <div className="flex flex-wrap items-center gap-3 mb-5">
           <div className="relative flex-1 min-w-[240px]">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500">
-              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-              <path d="M21 21l-4.3-4.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" /><path d="M21 21l-4.3-4.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
             <input className={`${inputCls} pl-10`} placeholder="Search articles…" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
           {isStaff && (
-            <button onClick={startCreate}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-[#0B1F3A] text-sm font-medium rounded-lg hover:shadow-[0_0_24px_rgba(59,130,246,0.35)] transition-all whitespace-nowrap">
+            <button onClick={startCreate} className="sheen inline-flex items-center gap-2 px-4 py-2.5 bg-white text-[#0B1F3A] text-sm font-medium rounded-lg hover:shadow-[0_0_28px_rgba(59,130,246,0.45)] transition-all whitespace-nowrap">
               <span className="text-base leading-none">+</span> New Article
             </button>
           )}
@@ -159,9 +130,7 @@ export default function KnowledgeBase() {
         <div className="flex flex-wrap gap-2 mb-6">
           {categoryPills.map((cat) => (
             <button key={cat} onClick={() => setActiveCategory(cat)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                activeCategory === cat ? "bg-blue-500 text-white" : "bg-white/5 border border-white/10 text-slate-300 hover:border-white/20"
-              }`}>
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${activeCategory === cat ? "bg-blue-500 text-white" : "bg-white/5 border border-white/10 text-slate-300 hover:border-white/20"}`}>
               {cat}
             </button>
           ))}
@@ -179,8 +148,8 @@ export default function KnowledgeBase() {
       </div>
 
       {selected && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-start justify-center p-4 md:p-8 overflow-y-auto" onClick={() => setSelected(null)}>
-          <div className="rounded-2xl border border-white/10 bg-[#0E1B33] max-w-2xl w-full my-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-start justify-center p-4 md:p-8 overflow-y-auto premium-scroll" onClick={() => setSelected(null)}>
+          <div className="glass max-w-2xl w-full my-8" onClick={(e) => e.stopPropagation()}>
             <div className="p-8">
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div className="flex items-center gap-2">
@@ -192,7 +161,6 @@ export default function KnowledgeBase() {
               <h2 className="text-xl font-semibold text-white tracking-tight mb-3">{selected.title}</h2>
               <p className="text-sm text-slate-400 mb-6">{selected.summary}</p>
               <ArticleBody text={selected.body} />
-
               {isStaff && (
                 <div className="flex gap-3 mt-8 pt-6 border-t border-white/8">
                   <button onClick={() => startEdit(selected)} className="px-4 py-2 text-sm font-medium text-slate-200 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors">Edit</button>
@@ -205,31 +173,24 @@ export default function KnowledgeBase() {
       )}
 
       {editing && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-start justify-center p-4 md:p-8 overflow-y-auto">
-          <div className="rounded-2xl border border-white/10 bg-[#0E1B33] max-w-2xl w-full my-8 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-start justify-center p-4 md:p-8 overflow-y-auto premium-scroll">
+          <div className="glass max-w-2xl w-full my-8">
             <div className="p-8 space-y-4">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-lg font-semibold text-white">{editing.id ? "Edit Article" : "New Article"}</h2>
                 <button onClick={() => setEditing(null)} className="text-slate-500 hover:text-slate-300 text-xl leading-none">×</button>
               </div>
-
               <input className={inputCls} placeholder="Title" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
-              <input className={inputCls} placeholder="Category (e.g. Network, Hardware, Accounts)" value={editing.category}
-                onChange={(e) => setEditing({ ...editing, category: e.target.value })} list="kb-categories" />
+              <input className={inputCls} placeholder="Category (e.g. Network, Hardware, Accounts)" value={editing.category} onChange={(e) => setEditing({ ...editing, category: e.target.value })} list="kb-categories" />
               <datalist id="kb-categories">{categories.map((c) => (<option key={c} value={c} />))}</datalist>
-              <textarea className={`${inputCls} resize-none`} rows={2} placeholder="Short summary shown on the card" value={editing.summary}
-                onChange={(e) => setEditing({ ...editing, summary: e.target.value })} />
-              <textarea className={`${inputCls} resize-none`} rows={10} placeholder="Article body" value={editing.body}
-                onChange={(e) => setEditing({ ...editing, body: e.target.value })} />
+              <textarea className={`${inputCls} resize-none`} rows={2} placeholder="Short summary shown on the card" value={editing.summary} onChange={(e) => setEditing({ ...editing, summary: e.target.value })} />
+              <textarea className={`${inputCls} resize-none`} rows={10} placeholder="Article body" value={editing.body} onChange={(e) => setEditing({ ...editing, body: e.target.value })} />
               <label className="flex items-center gap-2.5 text-sm text-slate-300">
-                <input type="checkbox" checked={editing.isPublished} onChange={(e) => setEditing({ ...editing, isPublished: e.target.checked })}
-                  className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/30" />
+                <input type="checkbox" checked={editing.isPublished} onChange={(e) => setEditing({ ...editing, isPublished: e.target.checked })} className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/30" />
                 Publish immediately (uncheck to save as draft)
               </label>
-
               <div className="flex gap-3 pt-2">
-                <button onClick={saveDraft} disabled={saving || !editing.title.trim()}
-                  className="px-5 py-2.5 bg-white text-[#0B1F3A] text-sm font-medium rounded-lg hover:shadow-[0_0_24px_rgba(59,130,246,0.35)] disabled:opacity-60 transition-all">
+                <button onClick={saveDraft} disabled={saving || !editing.title.trim()} className="sheen px-5 py-2.5 bg-white text-[#0B1F3A] text-sm font-medium rounded-lg hover:shadow-[0_0_28px_rgba(59,130,246,0.45)] disabled:opacity-60 transition-all">
                   {saving ? "Saving…" : "Save"}
                 </button>
                 <button onClick={() => setEditing(null)} className="px-5 py-2.5 text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors">Cancel</button>
