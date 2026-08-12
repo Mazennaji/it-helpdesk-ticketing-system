@@ -154,7 +154,7 @@ export default function AssistantWidget() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={onKeyDown}
-                placeholder="Describe your issue\u2026"
+                placeholder="Describe your issue…"
                 className="flex-1 resize-none px-2 py-1 text-sm text-white placeholder:text-slate-500 focus:outline-none max-h-24 bg-transparent"
               />
               <button
