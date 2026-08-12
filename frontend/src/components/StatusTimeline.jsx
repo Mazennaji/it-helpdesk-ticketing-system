@@ -26,19 +26,19 @@ export default function StatusTimeline({ currentStatus }) {
                 className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold border-2 transition-colors"
                 style={
                   done
-                    ? { backgroundColor: color, borderColor: color, color: "#fff" }
+                    ? { backgroundColor: color, borderColor: color, color: "#fff", boxShadow: `0 0 12px ${color}55` }
                     : active
-                    ? { backgroundColor: "#fff", borderColor: color, color }
-                    : { backgroundColor: "#fff", borderColor: "#CBD5E1", color: "#94A3B8" }
+                    ? { backgroundColor: "transparent", borderColor: color, color, boxShadow: `0 0 14px ${color}66` }
+                    : { backgroundColor: "transparent", borderColor: "rgba(255,255,255,0.15)", color: "#64748B" }
                 }
               >
                 {done ? "\u2713" : i + 1}
               </div>
               <span
                 className={`mt-1.5 text-xs whitespace-nowrap ${
-                  done || active ? "font-medium" : "text-slate-400"
+                  done || active ? "font-medium" : "text-slate-500"
                 }`}
-                style={done || active ? { color: active ? color : "#334155" } : undefined}
+                style={done || active ? { color: active ? color : "#CBD5E1" } : undefined}
               >
                 {stage}
               </span>
@@ -46,7 +46,7 @@ export default function StatusTimeline({ currentStatus }) {
             {i < STAGES.length - 1 && (
               <div
                 className="flex-1 h-0.5 mx-2 -mt-5 rounded-full transition-colors"
-                style={{ backgroundColor: i < safeIndex ? STAGE_COLORS[STAGES[i]] : "#E2E8F0" }}
+                style={{ backgroundColor: i < safeIndex ? STAGE_COLORS[STAGES[i]] : "rgba(255,255,255,0.1)" }}
               />
             )}
           </div>
