@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import NotificationBell from "./NotificationBell";
 import AssistantWidget from "./AssistantWidget";
 import { AuroraBackdrop } from "./premium";
+import BrandMark from "./BrandMark";
 
 const iconProps = {
   width: 18,
@@ -82,21 +83,7 @@ function SidebarContent({ user, location, onNavigate }) {
   return (
     <>
       <div className="flex items-center gap-2.5 px-3 mb-9">
-        <span className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-          <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
-            <path
-              d="M6 10a6 6 0 0 1 6-6h24a6 6 0 0 1 6 6v18a6 6 0 0 1-6 6H18l-9 8v-8H6V10Z"
-              fill="#13294B"
-            />
-            <path
-              d="M14 21l6 6 12-13"
-              stroke="#3B82F6"
-              strokeWidth="3.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </span>
+        <BrandMark size={36} className="rounded-xl shadow-[0_4px_16px_-4px_rgba(59,130,246,0.5)]" />
         <span className="text-white font-semibold tracking-tight text-base">
           HelpDesk <span className="text-blue-400">Pro</span>
         </span>
