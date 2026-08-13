@@ -37,6 +37,9 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.Configure<OpenAiOptions>(builder.Configuration.GetSection("OpenAI"));
 builder.Services.AddHttpClient<IAiService, AiService>();
 
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
+builder.Services.AddHttpClient<IEmailSender, ResendEmailSender>();
+
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var jwtKey = jwtSection["Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured.");
 
