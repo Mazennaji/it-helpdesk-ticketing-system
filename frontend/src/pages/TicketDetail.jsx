@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import StatusTimeline from "../components/StatusTimeline";
 import { GlassCard } from "../components/premium";
+import CommentBody from "../components/CommentBody";
 import { useAuth } from "../context/AuthContext";
 import {
   fetchTicketById, updateTicket, deleteTicket, assignTicket, escalateTicket,
@@ -240,7 +241,7 @@ export default function TicketDetail() {
                             {c.isInternal && (<span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300">Internal note</span>)}
                             <span className="text-xs text-slate-500">{new Date(c.createdAt).toLocaleString()}</span>
                           </div>
-                          <p className="text-sm text-slate-400 mt-0.5">{c.commentText}</p>
+                          <CommentBody text={c.commentText} className="mt-0.5" />
                         </div>
                       </div>
                     ))}
